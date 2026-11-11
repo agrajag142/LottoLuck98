@@ -1,0 +1,6 @@
+*.frm -text
+*.frx binary
+*.bas -text
+*.vbp -text
+*.txt -text
+*.lot -text

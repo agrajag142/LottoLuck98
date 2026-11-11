@@ -1,0 +1,845 @@
+<title>Lottoluck '98</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: the 1998 program's five full-width menu buttons become a top tab bar; each screen is a two-column
+   work surface (controls left, results right) that stacks to one column on phones. Single dark look by choice,
+   taken from the original navy forms, teal panels and yellow numerals. */
+:root {
+  color-scheme: dark;
+  --ink: #0a0f2b;          /* form background (original &H400000 navy) */
+  --deep: #070b20;
+  --panel: #10333a;        /* original &H404000 teal label panels */
+  --panel-2: #0d2630;
+  --line: #24525a;
+  --text: #e7eef0;
+  --muted: #93aeb4;
+  --gold: #ffe14a;         /* original &HFFFF yellow numerals */
+  --gold-ink: #2a2300;
+  --pick: #c3283a;         /* original &H80 selected-number red */
+  --ok: #4fd18b;
+  --warn: #ffb547;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Consolas", monospace;
+  --r: 10px;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ink); color: var(--text); }
+body {
+  font: 15px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+  background:
+    radial-gradient(1200px 500px at 85% -10%, #16245c 0%, transparent 60%),
+    var(--ink);
+  min-height: 100%;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--deep); }
+.wrap { max-width: 1180px; margin: 0 auto; }
+header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 22px 14px; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand h1 { font: 800 clamp(28px, 4.4vw, 44px)/1 var(--f-display); letter-spacing: -0.02em; margin: 0; color: var(--gold); text-wrap: balance; }
+.brand h1 span { color: var(--text); }
+.brand small { font: 500 12px/1.3 var(--f-mono); color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.latest { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.latest b { color: var(--text); font-weight: 600; }
+
+nav.menu { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: var(--deep); padding: 4px; border-radius: 12px; border: 1px solid var(--line); }
+nav.menu a { display: block; text-align: center; padding: 10px 6px; border-radius: 8px; color: var(--muted); text-decoration: none; font: 600 13px/1.2 var(--f-body); letter-spacing: 0.06em; text-transform: uppercase; }
+nav.menu a:hover { color: var(--text); background: var(--panel-2); }
+nav.menu a[aria-current="page"] { background: var(--gold); color: var(--gold-ink); }
+nav.menu a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .ball-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+section.screen { padding-block: 22px 0; }
+.screen-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.screen-head h2 { font: 800 26px/1.1 var(--f-display); margin: 0; letter-spacing: -0.01em; }
+.screen-head p { margin: 0; color: var(--muted); max-width: 62ch; }
+.cols { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.panel.flat { background: var(--panel-2); }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.label { font: 600 11px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+h3 { font: 700 16px/1.2 var(--f-display); margin: 0; }
+
+button, .btn { font: 600 13px/1 var(--f-body); border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 9px 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); font-size: 14px; padding: 11px 16px; }
+button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+button.chip { padding: 7px 10px; font-family: var(--f-mono); font-weight: 600; }
+button.chip[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+input[type="number"], input[type="text"], input[type="date"], select, textarea { font: 500 14px/1.3 var(--f-body); background: var(--deep); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+textarea { font-family: var(--f-mono); font-size: 13px; width: 100%; resize: vertical; }
+input[type="range"] { width: 100%; accent-color: var(--gold); }
+label.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--gold); }
+
+/* balls */
+.balls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ball { width: 34px; height: 34px; border-radius: 50%; display: inline-grid; place-items: center; font: 600 14px/1 var(--f-mono); color: #111; background: radial-gradient(circle at 35% 30%, #fff 0 12%, var(--bc, #ffe14a) 55%); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); font-variant-numeric: tabular-nums; }
+.ball.supp { box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 0 0 2px var(--ink), 0 0 0 3px var(--muted); }
+.ball.sm { width: 26px; height: 26px; font-size: 12px; }
+.plus { color: var(--muted); font: 600 13px var(--f-mono); }
+
+/* stats */
+.divtable { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.divtable th, .divtable td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.divtable th { font: 600 11px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.divtable td.num { text-align: right; font-family: var(--f-mono); }
+.divtable td.big { font: 600 20px/1 var(--f-mono); color: var(--gold); text-align: right; }
+.divtable tr.zero td.big { color: var(--muted); }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.stat .v { font: 600 22px/1.15 var(--f-mono); color: var(--gold); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.list { max-height: 320px; overflow: auto; font: 500 13px/1.6 var(--f-mono); background: var(--deep); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 0; list-style: none; }
+.list li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed #1b3a41; padding: 2px 0; }
+.list li:last-child { border-bottom: 0; }
+.list .d1 { color: var(--gold); }
+.empty { color: var(--muted); font: 14px var(--f-body); padding: 6px 0; }
+.progress { height: 6px; background: var(--deep); border-radius: 99px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .1s; }
+
+/* charts */
+.chart-wrap { overflow-x: auto; background: var(--deep); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; }
+.chart-wrap svg { display: block; width: 100%; min-width: 620px; height: auto; }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; padding: 7px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+.opts label:hover { background: var(--panel-2); }
+.opts input { margin-top: 4px; }
+
+/* number grid */
+.grid45 { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; }
+.ball-btn { aspect-ratio: 1; max-width: 100%; border-radius: 50%; border: 1px solid var(--line); background: #f3f1e6; color: #16181d; font: 600 15px/1 var(--f-mono); cursor: pointer; padding: 0; }
+.ball-btn[aria-pressed="true"] { background: var(--pick); color: #fff; border-color: var(--pick); }
+.ball-btn:disabled { opacity: .35; cursor: not-allowed; }
+.picked { min-height: 34px; }
+.games-out { max-height: 420px; overflow: auto; background: var(--deep); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 500 13px/1.7 var(--f-mono); display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 18px; font-variant-numeric: tabular-nums; }
+.games-out span { white-space: nowrap; }
+.games-out span em { color: var(--muted); font-style: normal; margin-right: 6px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--gold); color: var(--gold-ink); font-weight: 600; padding: 10px 16px; border-radius: 99px; z-index: 20; }
+footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: var(--f-mono); }
+@media (max-width: 560px) {
+  nav.menu a { font-size: 11px; letter-spacing: 0.02em; padding: 10px 2px; }
+  .ball { width: 30px; height: 30px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>LOTTOLUCK <span>'98</span></h1>
+      <small>Version 0.93h beta · written by Justin Little</small>
+    </div>
+    <div class="latest" id="latest"></div>
+  </header>
+
+  <nav class="menu" aria-label="Screens">
+    <a href="#check" data-tab="check">Check winnings</a>
+    <a href="#graphs" data-tab="graphs">Graphing</a>
+    <a href="#designer" data-tab="designer">Game designer</a>
+    <a href="#wheels" data-tab="wheels">Wheeling</a>
+    <a href="#add-draw" data-tab="add-draw">Add draw</a>
+  </nav>
+
+  <!-- CHECK WINNINGS -->
+  <section class="screen" id="screen-check" hidden>
+    <div class="screen-head">
+      <h2>Check winnings</h2>
+      <p>Run your games against past Saturday draws and see what they would have won.</p>
+    </div>
+    <div class="cols">
+      <div class="stack">
+        <div class="panel">
+          <div class="row" style="justify-content:space-between"><span class="label">Your games</span><span class="hint" id="gameCount"></span></div>
+          <textarea id="gamesText" rows="9" spellcheck="false" aria-label="Games, one per line"></textarea>
+          <div class="row">
+            <label class="btn" for="gameFile">Load .lot file</label>
+            <input id="gameFile" type="file" accept=".lot,.txt" hidden>
+            <button id="resetGames" type="button">Use number.lot</button>
+          </div>
+          <p class="hint">One game per line: six numbers, either as 12 digits like <code>011619202332</code> or separated by spaces or commas.</p>
+        </div>
+        <div class="panel">
+          <span class="label">Draws to check</span>
+          <div class="row" id="presetRow">
+            <button class="chip" data-n="1" type="button">1</button>
+            <button class="chip" data-n="4" type="button">4</button>
+            <button class="chip" data-n="8" type="button">8</button>
+            <button class="chip" data-n="52" type="button">52</button>
+            <button class="chip" data-n="since45" type="button">Since 45 balls</button>
+            <button class="chip" data-n="all" type="button">All</button>
+          </div>
+          <input id="drawRange" type="range" min="1" value="52" aria-label="Number of draws">
+          <p class="hint" id="rangeText"></p>
+          <button class="primary" id="runCheck" type="button">Check games</button>
+          <div class="progress" aria-hidden="true"><i id="checkProg"></i></div>
+        </div>
+        <div class="panel flat">
+          <span class="label">Draw browser</span>
+          <input id="browse" type="range" min="0" aria-label="Browse draws">
+          <div id="browseOut"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <div class="row" style="justify-content:space-between"><h3 id="checkTitle">Results</h3><span class="hint" id="checkSub"></span></div>
+          <table class="divtable">
+            <thead><tr><th>Prize</th><th>Rule</th><th style="text-align:right">Expected</th><th style="text-align:right">Won</th></tr></thead>
+            <tbody id="divBody"></tbody>
+          </table>
+          <div class="summary" id="summary"></div>
+        </div>
+        <div class="panel">
+          <span class="label">Division wins</span>
+          <ul class="list" id="winList"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GRAPHING -->
+  <section class="screen" id="screen-graphs" hidden>
+    <div class="screen-head">
+      <h2>Graphing</h2>
+      <p>How often each ball has come up, how overdue it is, and how your games have done.</p>
+    </div>
+    <div class="cols">
+      <div class="panel">
+        <span class="label">Graph</span>
+        <div class="opts" id="graphOpts"></div>
+        <span class="label">Style</span>
+        <div class="row">
+          <button class="chip" data-style="bar" aria-pressed="true" type="button">Bars</button>
+          <button class="chip" data-style="line" aria-pressed="false" type="button">Line</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <h3 id="graphTitle"></h3>
+          <div class="chart-wrap"><svg id="chart" viewBox="0 0 900 380" role="img" aria-labelledby="graphTitle"></svg></div>
+          <p class="hint" id="graphNote"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAME DESIGNER -->
+  <section class="screen" id="screen-designer" hidden>
+    <div class="screen-head">
+      <h2>Game designer</h2>
+      <p>Generate random games with preferred numbers, exclusions and a sum range, or type in your own.</p>
+    </div>
+    <div class="cols">
+      <div class="stack">
+        <div class="panel">
+          <span class="label">Games to create</span>
+          <div class="row">
+            <input id="toGet" type="number" min="1" max="1250" value="70" style="width:90px" aria-label="Games to create">
+            <span id="toGetPresets" class="row"></span>
+          </div>
+          <span class="label">Sum of the six numbers</span>
+          <div class="row"><span class="hint">Min</span><input id="sumMin" type="range" min="21" max="254" value="21" style="flex:1" aria-label="Minimum sum"><b id="sumMinV" style="font-family:var(--f-mono);width:3ch">21</b></div>
+          <div class="row"><span class="hint">Max</span><input id="sumMax" type="range" min="22" max="255" value="255" style="flex:1" aria-label="Maximum sum"><b id="sumMaxV" style="font-family:var(--f-mono);width:3ch">255</b></div>
+          <div class="row">
+            <label class="check"><input id="no7" type="checkbox"> No 7</label>
+            <label class="check"><input id="no13" type="checkbox"> No 13</label>
+          </div>
+        </div>
+        <div class="panel">
+          <span class="label">Preferred numbers (in every game)</span>
+          <div class="row" id="prefRow"></div>
+          <div class="row">
+            <button type="button" data-fill="cold">Coldest</button>
+            <button type="button" data-fill="hot">Hottest</button>
+            <button type="button" data-fill="due">Power / due</button>
+            <button type="button" id="prefClear">Clear</button>
+          </div>
+          <p class="hint">Coldest and hottest count every draw since 45 balls were introduced.</p>
+        </div>
+        <button class="primary" id="createGames" type="button">Create games</button>
+        <div class="panel flat">
+          <span class="label">Add a game by hand</span>
+          <div class="row" id="manualRow"></div>
+          <button type="button" id="addManual">Add game</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h3>Game list</h3><span class="hint" id="designCount"></span></div>
+        <div class="games-out" id="designOut"></div>
+        <div class="row">
+          <button class="primary" type="button" id="designCheck">Check these games</button>
+          <button type="button" id="designCopy">Copy as .lot</button>
+          <button type="button" id="designClear">Clear list</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHEELING -->
+  <section class="screen" id="screen-wheels" hidden>
+    <div class="screen-head">
+      <h2>Wheeling systems</h2>
+      <p>Pick a field of numbers and a wheel expands them into the games that guarantee a prize.</p>
+    </div>
+    <div class="cols">
+      <div class="stack">
+        <div class="panel">
+          <label class="label" for="wheelSel">Wheel</label>
+          <select id="wheelSel"></select>
+          <p class="hint" id="wheelText"></p>
+          <div class="summary">
+            <div class="stat"><div class="v" id="wheelField"></div><div class="k">numbers to pick</div></div>
+            <div class="stat"><div class="v" id="wheelGames"></div><div class="k">games</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <span class="label">Pick numbers for me</span>
+          <div class="row">
+            <button type="button" id="quickPick">Quick pick</button>
+            <button type="button" id="lastDrawn">Last draw</button>
+            <button type="button" id="wheelClear">Clear</button>
+          </div>
+          <div class="row">
+            <select id="hcKind" aria-label="Hot or cold">
+              <option value="hot">Hottest</option>
+              <option value="cold">Coldest</option>
+              <option value="due">Power / due</option>
+            </select>
+            <select id="hcSpan" aria-label="Over how many draws">
+              <option value="5">last 5 draws</option>
+              <option value="10">last 10 draws</option>
+              <option value="50">last 50 draws</option>
+              <option value="100" selected>last 100 draws</option>
+              <option value="200">last 200 draws</option>
+              <option value="500">last 500 draws</option>
+              <option value="since45">since 45 balls</option>
+              <option value="all">all draws</option>
+            </select>
+            <label class="check"><input id="hcSupps" type="checkbox" checked> Count supps</label>
+            <button type="button" id="hcGo">Pick</button>
+          </div>
+          <label class="check"><input id="autoWheel" type="checkbox" checked> Wheel automatically when the field is full</label>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <div class="row" style="justify-content:space-between"><h3>Number grid</h3><span class="hint" id="selCount"></span></div>
+          <div class="grid45" id="grid45"></div>
+          <div class="balls picked" id="pickedBalls"></div>
+          <button class="primary" type="button" id="wheelIt" disabled>Wheel these numbers</button>
+        </div>
+        <div class="panel">
+          <div class="row" style="justify-content:space-between"><h3>Wheeled games</h3><span class="hint" id="wheelCount"></span></div>
+          <div class="games-out" id="wheelOut"></div>
+          <div class="row">
+            <button class="primary" type="button" id="wheelCheck">Check these games</button>
+            <button type="button" id="wheelCopy">Copy as .lot</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADD DRAW -->
+  <section class="screen" id="screen-add-draw" hidden>
+    <div class="screen-head">
+      <h2>Add draw</h2>
+      <p>Type in a new Saturday result. It is saved in this browser and used on every screen.</p>
+    </div>
+    <div class="cols">
+      <form class="panel" id="addForm" autocomplete="off">
+        <div class="row">
+          <label class="label" for="adNum" style="width:100%">Draw number</label>
+          <input id="adNum" type="number" min="1" style="width:110px">
+          <input id="adDate" type="date" aria-label="Draw date">
+        </div>
+        <span class="label">Winning numbers</span>
+        <div class="row" id="adMain"></div>
+        <span class="label">Supplementary numbers</span>
+        <div class="row" id="adSupp"></div>
+        <p class="hint" id="adMsg"></p>
+        <button class="primary" type="submit">Add draw</button>
+      </form>
+      <div class="stack">
+        <div class="panel">
+          <h3>Draws added here</h3>
+          <ul class="list" id="addedList"></ul>
+          <div class="row">
+            <button type="button" id="copyHistory">Copy full tattslot.txt</button>
+          </div>
+          <p class="hint">The history built into this page ends at the draw shown at the top. Draws you add stay in this browser only; copy the history to keep a file version.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Lottoluck '98 · Tattslotto checker, grapher and wheeling system · reconstructed from the original VB5 program</footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const RAW_DRAWS = `/*__DRAWS__*/`;
+const WHEELS = /*__WHEELS__*/;
+const DEFAULT_GAMES = `/*__GAMES__*/`;
+
+/* ---------- data ---------- */
+const ODDS = { 1: 8145060, 2: 678755, 3: 36690, 4: 733, 5: 298 };
+let added = [];
+try { added = JSON.parse(localStorage.getItem('ll-added') || '[]'); } catch (e) { added = []; }
+let draws = [];
+function parseDraws() {
+  const list = [];
+  for (const line of RAW_DRAWS.split('\n')) {
+    const p = line.trim().split(',');
+    if (p.length < 10 || !/^[A-Z]\d+/.test(p[0])) continue;
+    const balls = p.slice(2, 10).map(Number);
+    list.push({ id: p[0], num: parseInt(p[0].slice(1), 10), date: p[1], main: balls.slice(0, 6), supp: balls.slice(6).filter(b => b > 0) });
+  }
+  for (const a of added) list.push(a);
+  list.sort((a, b) => a.date.localeCompare(b.date) || a.num - b.num);
+  draws = list;
+}
+parseDraws();
+const since45Index = () => draws.findIndex(d => d.id === 'B0413');
+const fmtDate = s => { const d = new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const COLORS = ['#ffe14a', '#5ec8ff', '#ff7b6b', '#7be08f', '#d6a6ff'];
+const ballColor = n => COLORS[Math.min(4, Math.floor((n - 1) / 9))];
+function ballHTML(n, cls = '') { return `<span class="ball ${cls}" style="--bc:${ballColor(n)}">${n}</span>`; }
+function drawBalls(d, small) {
+  const c = small ? 'sm' : '';
+  return d.main.map(n => ballHTML(n, c)).join('') + (d.supp.length ? '<span class="plus">+</span>' + d.supp.map(n => ballHTML(n, c + ' supp')).join('') : '');
+}
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2200); }
+async function copyText(text, okMsg, fallbackEl) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    toast('Copy blocked here: text selected, press Ctrl+C'); setTimeout(() => ta.remove(), 8000);
+  }
+}
+function parseGames(text) {
+  const games = []; const bad = [];
+  text.split(/\r?\n|\r/).forEach((line, i) => {
+    const t = line.trim(); if (!t) return;
+    let nums;
+    if (/^\d{12}$/.test(t)) nums = t.match(/\d\d/g).map(Number);
+    else nums = (t.match(/\d+/g) || []).map(Number).slice(0, 6);
+    if (nums.length === 6 && nums.every(n => n >= 1 && n <= 45) && new Set(nums).size === 6) games.push(nums.sort((a, b) => a - b));
+    else bad.push(i + 1);
+  });
+  return { games, bad };
+}
+const pad = n => String(n).padStart(2, '0');
+const gameToLot = g => g.map(pad).join('');
+
+/* counting helpers shared by the designer and wheeling screens (newest draw first) */
+function countBalls(n, includeSupps) {
+  const c = new Array(46).fill(0);
+  for (let i = draws.length - 1, k = 0; i >= 0 && k < n; i--, k++) {
+    const d = draws[i];
+    d.main.forEach(b => c[b]++);
+    if (includeSupps) d.supp.forEach(b => c[b]++);
+  }
+  return c;
+}
+function spanToCount(span) {
+  if (span === 'all') return draws.length;
+  if (span === 'since45') { const i = since45Index(); return i < 0 ? draws.length : draws.length - i; }
+  return Math.min(+span, draws.length);
+}
+function rankNumbers(kind, span, includeSupps) {
+  const nums = Array.from({ length: 45 }, (_, i) => i + 1);
+  if (kind === 'due') {
+    const recent = spanToCount(span === 'all' || span === 'since45' ? '100' : span);
+    const all = countBalls(draws.length, true), rec = countBalls(recent, true);
+    const power = n => all[n] / draws.length * 100 - rec[n] / recent * 100;
+    return nums.sort((a, b) => power(b) - power(a) || a - b);
+  }
+  const c = countBalls(spanToCount(span), includeSupps);
+  return nums.sort((a, b) => kind === 'hot' ? (c[b] - c[a] || a - b) : (c[a] - c[b] || a - b));
+}
+
+/* ---------- header & tabs ---------- */
+function renderLatest() {
+  const d = draws[draws.length - 1];
+  document.getElementById('latest').innerHTML = `<span>Latest draw <b>${d.id}</b> · ${fmtDate(d.date)}</span><span class="balls">${drawBalls(d, true)}</span>`;
+}
+const TABS = ['check', 'graphs', 'designer', 'wheels', 'add-draw'];
+function showTab() {
+  let t = location.hash.slice(1); if (!TABS.includes(t)) t = 'check';
+  TABS.forEach(x => document.getElementById('screen-' + x).hidden = x !== t);
+  document.querySelectorAll('nav.menu a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === t ? 'page' : 'false'));
+  if (t === 'graphs') drawGraph();
+}
+window.addEventListener('hashchange', showTab);
+
+/* ---------- CHECK WINNINGS ---------- */
+const gamesText = document.getElementById('gamesText');
+let savedGames = null;
+try { savedGames = localStorage.getItem('ll-games'); } catch (e) {}
+gamesText.value = savedGames || DEFAULT_GAMES;
+let lastCheck = null;
+function updateGameCount() {
+  const { games, bad } = parseGames(gamesText.value);
+  document.getElementById('gameCount').textContent = `${games.length} game${games.length === 1 ? '' : 's'}` + (bad.length ? ` · ${bad.length} line${bad.length > 1 ? 's' : ''} skipped` : '');
+  try { localStorage.setItem('ll-games', gamesText.value); } catch (e) {}
+  updateRangeText();
+}
+function setGames(games) { gamesText.value = games.map(gameToLot).join('\n'); updateGameCount(); location.hash = 'check'; }
+gamesText.addEventListener('input', updateGameCount);
+document.getElementById('resetGames').addEventListener('click', () => { gamesText.value = DEFAULT_GAMES; updateGameCount(); });
+document.getElementById('gameFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { gamesText.value = String(r.result).replace(/\n\r/g, '\n'); updateGameCount(); toast('Loaded ' + f.name); }; r.readAsText(f); e.target.value = '';
+});
+const drawRange = document.getElementById('drawRange');
+function updateRangeText() {
+  const n = +drawRange.value; const g = parseGames(gamesText.value).games.length;
+  const first = draws[draws.length - n];
+  document.getElementById('rangeText').textContent = `Last ${n} draw${n > 1 ? 's' : ''}, back to ${first.id} (${fmtDate(first.date)}). Equivalent to ${(n * g).toLocaleString()} games.`;
+  document.querySelectorAll('#presetRow .chip').forEach(b => {
+    const v = b.dataset.n === 'all' ? draws.length : b.dataset.n === 'since45' ? spanToCount('since45') : +b.dataset.n;
+    b.setAttribute('aria-pressed', v === n ? 'true' : 'false');
+  });
+}
+drawRange.addEventListener('input', updateRangeText);
+document.querySelectorAll('#presetRow .chip').forEach(b => b.addEventListener('click', () => {
+  drawRange.value = b.dataset.n === 'all' ? draws.length : b.dataset.n === 'since45' ? spanToCount('since45') : b.dataset.n;
+  updateRangeText();
+}));
+const DIVS = [
+  { key: 1, name: 'Division 1', rule: '6 numbers' },
+  { key: 2, name: 'Division 2', rule: '5 + supp' },
+  { key: 3, name: 'Division 3', rule: '5 numbers' },
+  { key: 4, name: 'Division 4', rule: '4 numbers' },
+  { key: 5, name: 'Division 5', rule: '3 + supp' },
+  { key: 0, name: '3 numbers', rule: '3, no supp' },
+  { key: 6, name: '2 + supp', rule: '2 + 1 supp' }
+];
+function classify(h, s) {
+  if (h === 6) return 1;
+  if (h === 5) return s > 0 ? 2 : 3;
+  if (h === 4) return 4;
+  if (h === 3) return s > 0 ? 5 : 0;
+  if (h === 2 && s === 1) return 6;
+  return -1;
+}
+function runCheck() {
+  const { games } = parseGames(gamesText.value);
+  if (!games.length) { toast('Add at least one game first'); return; }
+  const n = +drawRange.value;
+  const counts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const wins = []; const history = [];
+  const prog = document.getElementById('checkProg');
+  const gameMasks = games.map(g => { const m = new Uint8Array(46); g.forEach(x => m[x] = 1); return m; });
+  let i = 0; const start = draws.length - n;
+  const btn = document.getElementById('runCheck'); btn.disabled = true;
+  function chunk() {
+    const stop = Math.min(n, i + 60);
+    for (; i < stop; i++) {
+      const d = draws[draws.length - 1 - i];
+      let best = 0;
+      gameMasks.forEach((m, gi) => {
+        let h = 0, s = 0; d.main.forEach(b => h += m[b]); d.supp.forEach(b => s += m[b]);
+        const c = classify(h, s); if (c < 0) return;
+        counts[c]++;
+        if (c >= 1 && c <= 5) { wins.push({ div: c, draw: d, game: gi + 1 }); best = Math.max(best, 6 - c); }
+      });
+      history.push({ draw: d, best });
+    }
+    prog.style.width = (i / n * 100) + '%';
+    if (i < n) requestAnimationFrame(chunk); else finish();
+  }
+  function finish() {
+    btn.disabled = false;
+    lastCheck = { counts, wins, history: history.reverse(), n, games: games.length };
+    renderCheck();
+  }
+  chunk();
+}
+function renderCheck() {
+  const c = lastCheck;
+  const body = document.getElementById('divBody');
+  body.innerHTML = DIVS.map(d => {
+    const exp = ODDS[d.key] ? (c ? Math.floor(c.n / (ODDS[d.key] / c.games) * 10) / 10 : '') : '';
+    const won = c ? c.counts[d.key] : '–';
+    return `<tr class="${c && !c.counts[d.key] ? 'zero' : ''}"><td>${d.name}</td><td>${d.rule}</td><td class="num">${exp === '' ? '' : exp.toFixed(1)}</td><td class="big">${won}</td></tr>`;
+  }).join('');
+  const list = document.getElementById('winList'); const sum = document.getElementById('summary');
+  if (!c) {
+    document.getElementById('checkSub').textContent = 'Not run yet';
+    list.innerHTML = '<li class="empty">Choose how many draws to check, then press Check games.</li>';
+    sum.innerHTML = ''; return;
+  }
+  document.getElementById('checkSub').textContent = `${c.games} games × ${c.n} draws`;
+  const total = c.wins.length;
+  const lastWin = c.wins.length ? c.wins[0].draw : null;
+  const every = total ? c.n / total : 0;
+  sum.innerHTML = `
+    <div class="stat"><div class="v">${total}</div><div class="k">division wins</div></div>
+    <div class="stat"><div class="v">${total ? '1 in ' + Math.floor(every) : '–'}</div><div class="k">draws per win</div></div>
+    <div class="stat"><div class="v">${lastWin ? lastWin.id : '–'}</div><div class="k">most recent win</div></div>
+    <div class="stat"><div class="v">${lastWin ? 'B' + (lastWin.num + Math.floor(every) * 2) : '–'}</div><div class="k">next win, on average</div></div>`;
+  list.innerHTML = total ? c.wins.slice(0, 600).map(w => `<li class="${w.div === 1 ? 'd1' : ''}"><span>Division ${w.div} · game ${w.game}</span><span>${w.draw.id} · ${fmtDate(w.draw.date)}</span></li>`).join('') + (total > 600 ? `<li class="empty">…and ${total - 600} more</li>` : '')
+    : '<li class="empty">No division wins in this range.</li>';
+}
+document.getElementById('runCheck').addEventListener('click', runCheck);
+const browse = document.getElementById('browse');
+function renderBrowse() {
+  const d = draws[+browse.value];
+  document.getElementById('browseOut').innerHTML = `<div class="row" style="justify-content:space-between"><b style="font-family:var(--f-mono)">${d.id}</b><span class="hint">${fmtDate(d.date)}</span></div><div class="balls" style="margin-top:8px">${drawBalls(d)}</div>`;
+}
+browse.addEventListener('input', renderBrowse);
+
+/* ---------- GRAPHING ---------- */
+const GRAPHS = [
+  { id: 'freqAll', label: 'Times drawn since the first draw', title: 'Number of times each ball was drawn since the first draw', f: () => freq(0, true, true) },
+  { id: 'freq45', label: 'Times drawn since 45 balls', title: 'Number of times each ball was drawn since 45 numbers were introduced', f: () => freq(since45Index(), true, true) },
+  { id: 'mainAll', label: 'Main numbers, since the first draw', title: 'Times drawn since the first draw, excluding supplementaries', f: () => freq(0, true, false) },
+  { id: 'main45', label: 'Main numbers, since 45 balls', title: 'Times drawn since 45 numbers were introduced, excluding supplementaries', f: () => freq(since45Index(), true, false) },
+  { id: 'suppAll', label: 'As a supplementary, since the first draw', title: 'Times each ball was drawn as a supplementary since the first draw', f: () => freq(0, false, true) },
+  { id: 'supp45', label: 'As a supplementary, since 45 balls', title: 'Times each ball was drawn as a supplementary since 45 numbers were introduced', f: () => freq(since45Index(), false, true) },
+  { id: 'weeks', label: 'Weeks since drawn', title: 'Number of weeks since each ball was drawn last', f: weeksSince },
+  { id: 'sums', label: 'Sum of each draw since 45 balls', title: 'Sum of the six main numbers for each draw since 45 numbers were introduced', f: sums },
+  { id: 'wins', label: 'Wins for your games', title: 'Prize won each draw by your games on the Check winnings screen', f: winsGraph }
+];
+let graphId = 'weeks'; let graphStyle = 'bar';
+try { graphId = localStorage.getItem('ll-graph') || 'weeks'; } catch (e) {}
+function freq(from, main, supp) {
+  const c = new Array(46).fill(0);
+  for (let i = Math.max(0, from); i < draws.length; i++) { if (main) draws[i].main.forEach(b => c[b]++); if (supp) draws[i].supp.forEach(b => c[b]++); }
+  return { labels: range45(), values: c.slice(1), note: `${draws.length - Math.max(0, from)} draws counted.` };
+}
+function range45() { return Array.from({ length: 45 }, (_, i) => String(i + 1)); }
+function weeksSince() {
+  const v = [];
+  for (let n = 1; n <= 45; n++) {
+    let k = 0;
+    for (let i = draws.length - 1; i >= 0; i--, k++) { const d = draws[i]; if (d.main.includes(n) || d.supp.includes(n)) break; }
+    v.push(k);
+  }
+  return { labels: range45(), values: v, note: 'Counts back from the latest draw, including supplementaries.' };
+}
+function sums() {
+  const s = since45Index(); const ds = draws.slice(s < 0 ? 0 : s);
+  const values = ds.map(d => d.main.reduce((a, b) => a + b, 0));
+  return { labels: ds.map(d => d.id), values, line: true, stats: true, note: `${ds.length} draws. The dashed line is the average sum, the solid line the trend.` };
+}
+function winsGraph() {
+  if (!lastCheck) return { labels: [], values: [], note: 'Run Check winnings first. This graph shows the best prize your games won in each draw checked.' };
+  return { labels: lastCheck.history.map(h => h.draw.id), values: lastCheck.history.map(h => h.best), divScale: true, note: `${lastCheck.history.length} draws checked. Bar height: 5 = Division 1 … 1 = Division 5.` };
+}
+function drawGraph() {
+  const g = GRAPHS.find(x => x.id === graphId) || GRAPHS[6];
+  const data = g.f();
+  document.getElementById('graphTitle').textContent = g.title;
+  document.getElementById('graphNote').textContent = data.note || '';
+  const svg = document.getElementById('chart');
+  const W = 900, H = 380, L = 44, R = 14, T = 16, B = 46;
+  if (!data.values.length) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" fill="#93aeb4" text-anchor="middle" font-size="15">No data yet</text>`; return; }
+  const max = data.divScale ? 5 : Math.max(1, ...data.values);
+  const min = data.stats ? Math.floor(Math.min(...data.values) / 10) * 10 : 0;
+  const step = niceStep((max - min) / 5);
+  const top = data.divScale ? 5 : Math.ceil(max / step) * step;
+  const y = v => T + (H - T - B) * (1 - (v - min) / (top - min));
+  const n = data.values.length; const bw = (W - L - R) / n;
+  const x = i => L + bw * i + bw / 2;
+  let s = '';
+  for (let v = min; v <= top + 0.001; v += data.divScale ? 1 : step) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#1d3d45" stroke-width="1"/><text x="${L - 8}" y="${y(v) + 4}" fill="#93aeb4" font-size="11" text-anchor="end" font-family="IBM Plex Mono, monospace">${data.divScale ? (v ? 'D' + (6 - v) : '') : Math.round(v)}</text>`;
+  }
+  const useLine = data.line || graphStyle === 'line';
+  if (useLine) {
+    const pts = data.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    s += `<polyline points="${pts}" fill="none" stroke="#ffe14a" stroke-width="${n > 200 ? 1 : 2}" stroke-linejoin="round"/>`;
+    if (n <= 60) data.values.forEach((v, i) => s += `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="#ffe14a"><title>${data.labels[i]}: ${v}</title></circle>`);
+  } else {
+    data.values.forEach((v, i) => {
+      const h = y(min) - y(v);
+      s += `<rect x="${(x(i) - bw * 0.36).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw * 0.72).toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="${Math.min(3, bw * 0.2)}" fill="${data.divScale ? (v >= 4 ? '#ffe14a' : '#5ec8ff') : ballColor(i + 1)}"><title>${data.labels[i]}: ${data.divScale ? (v ? 'Division ' + (6 - v) : 'no win') : v}</title></rect>`;
+    });
+  }
+  if (data.stats) {
+    const mean = data.values.reduce((a, b) => a + b, 0) / n;
+    let sx = 0, sy = 0, sxy = 0, sxx = 0;
+    data.values.forEach((v, i) => { sx += i; sy += v; sxy += i * v; sxx += i * i; });
+    const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx), icpt = (sy - slope * sx) / n;
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(mean)}" y2="${y(mean)}" stroke="#ff7b6b" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+    s += `<line x1="${x(0)}" x2="${x(n - 1)}" y1="${y(icpt)}" y2="${y(icpt + slope * (n - 1))}" stroke="#7be08f" stroke-width="2"/>`;
+    s += `<text x="${W - R}" y="${y(mean) - 6}" fill="#ff7b6b" font-size="11" text-anchor="end" font-family="IBM Plex Mono, monospace">avg ${mean.toFixed(1)}</text>`;
+  }
+  const every = n <= 45 ? 1 : Math.ceil(n / 12);
+  data.labels.forEach((lab, i) => { if (i % every === 0 || (n <= 45 && true)) s += `<text x="${x(i)}" y="${H - B + 16}" fill="#93aeb4" font-size="${n <= 45 ? 11 : 10}" text-anchor="middle" font-family="IBM Plex Mono, monospace">${lab}</text>`; });
+  s += `<line x1="${L}" x2="${W - R}" y1="${y(min)}" y2="${y(min)}" stroke="#93aeb4" stroke-width="1"/>`;
+  svg.innerHTML = s;
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-9)))); const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+function renderGraphOpts() {
+  document.getElementById('graphOpts').innerHTML = GRAPHS.map(g => `<label><input type="radio" name="graph" id="g-${g.id}" value="${g.id}" ${g.id === graphId ? 'checked' : ''}><span>${g.label}</span></label>`).join('');
+  document.querySelectorAll('input[name="graph"]').forEach(r => r.addEventListener('change', () => { graphId = r.value; try { localStorage.setItem('ll-graph', graphId); } catch (e) {} drawGraph(); }));
+  document.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => {
+    graphStyle = b.dataset.style; document.querySelectorAll('[data-style]').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); drawGraph();
+  }));
+}
+
+/* ---------- GAME DESIGNER ---------- */
+let designGames = [];
+const prefRow = document.getElementById('prefRow');
+for (let i = 0; i < 5; i++) prefRow.insertAdjacentHTML('beforeend', `<input type="number" min="1" max="45" id="pref${i}" style="width:62px" aria-label="Preferred number ${i + 1}">`);
+const manualRow = document.getElementById('manualRow');
+for (let i = 0; i < 6; i++) manualRow.insertAdjacentHTML('beforeend', `<input type="number" min="1" max="45" id="man${i}" style="width:58px" aria-label="Number ${i + 1}">`);
+document.getElementById('toGetPresets').innerHTML = [14, 28, 42, 70, 100, 298, 733].map(n => `<button class="chip" type="button" data-get="${n}">${n}</button>`).join('');
+document.querySelectorAll('[data-get]').forEach(b => b.addEventListener('click', () => document.getElementById('toGet').value = b.dataset.get));
+const sumMin = document.getElementById('sumMin'), sumMax = document.getElementById('sumMax');
+sumMin.addEventListener('input', () => { if (+sumMax.value <= +sumMin.value) sumMax.value = +sumMin.value + 1; syncSums(); });
+sumMax.addEventListener('input', () => { if (+sumMin.value >= +sumMax.value) sumMin.value = +sumMax.value - 1; syncSums(); });
+function syncSums() { document.getElementById('sumMinV').textContent = sumMin.value; document.getElementById('sumMaxV').textContent = sumMax.value; }
+function prefs() {
+  const out = [];
+  for (let i = 0; i < 5; i++) { const v = +document.getElementById('pref' + i).value; if (v >= 1 && v <= 45 && !out.includes(v)) out.push(v); }
+  return out;
+}
+document.querySelectorAll('[data-fill]').forEach(b => b.addEventListener('click', () => {
+  const order = rankNumbers(b.dataset.fill, b.dataset.fill === 'due' ? '100' : 'since45', true);
+  order.slice(0, 5).forEach((n, i) => document.getElementById('pref' + i).value = n);
+  toast(`Filled the ${b.textContent.toLowerCase()} five numbers`);
+}));
+document.getElementById('prefClear').addEventListener('click', () => { for (let i = 0; i < 5; i++) document.getElementById('pref' + i).value = ''; });
+function makeGame(pref, banned) {
+  const set = new Set(pref.filter(n => !banned.has(n)));
+  while (set.size < 6) { const n = 1 + Math.floor(Math.random() * 45); if (!banned.has(n)) set.add(n); }
+  return [...set].sort((a, b) => a - b);
+}
+document.getElementById('createGames').addEventListener('click', () => {
+  const want = Math.max(1, Math.min(1250, +document.getElementById('toGet').value || 70));
+  const lo = +sumMin.value, hi = +sumMax.value; const pref = prefs();
+  const banned = new Set(); if (document.getElementById('no7').checked) banned.add(7); if (document.getElementById('no13').checked) banned.add(13);
+  const games = []; let tries = 0;
+  while (games.length < want && tries < want * 4000) {
+    tries++; const g = makeGame(pref, banned); const s = g.reduce((a, b) => a + b, 0);
+    if (s >= lo && s <= hi) games.push(g);
+  }
+  designGames = games; renderDesign();
+  if (games.length < want) toast(`Only ${games.length} games fit that sum range`); else toast(`Created ${games.length} games`);
+});
+document.getElementById('addManual').addEventListener('click', () => {
+  const g = []; for (let i = 0; i < 6; i++) g.push(+document.getElementById('man' + i).value);
+  if (!(g.every(n => n >= 1 && n <= 45) && new Set(g).size === 6)) { toast('Enter six different numbers from 1 to 45'); return; }
+  designGames.push(g.sort((a, b) => a - b)); renderDesign();
+  for (let i = 0; i < 6; i++) document.getElementById('man' + i).value = '';
+  document.getElementById('man0').focus();
+});
+manualRow.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return; e.preventDefault();
+  const i = +e.target.id.slice(3); if (i < 5) document.getElementById('man' + (i + 1)).focus(); else document.getElementById('addManual').click();
+});
+function renderGamesOut(el, games) {
+  el.innerHTML = games.length ? games.map((g, i) => `<span><em>${String(i + 1).padStart(3, ' ')}</em>${g.map(pad).join(' ')} <em>Σ${g.reduce((a, b) => a + b, 0)}</em></span>`).join('') : '<span class="empty">No games yet.</span>';
+}
+function renderDesign() { renderGamesOut(document.getElementById('designOut'), designGames); document.getElementById('designCount').textContent = designGames.length + ' games'; }
+document.getElementById('designClear').addEventListener('click', () => { designGames = []; renderDesign(); });
+document.getElementById('designCheck').addEventListener('click', () => designGames.length ? setGames(designGames) : toast('Create some games first'));
+document.getElementById('designCopy').addEventListener('click', () => designGames.length ? copyText(designGames.map(gameToLot).join('\n'), 'Copied ' + designGames.length + ' games') : toast('Create some games first'));
+
+/* ---------- WHEELING ---------- */
+let wheel = WHEELS.find(w => w.id === 'forteenforteen') || WHEELS[0];
+let picked = []; let wheeled = [];
+const sel = document.getElementById('wheelSel');
+const groups = {};
+WHEELS.forEach(w => (groups[w.prize] = groups[w.prize] || []).push(w));
+sel.innerHTML = Object.keys(groups).map(p => `<optgroup label="${p} guarantee">${groups[p].map(w => `<option value="${w.id}">${w.field} numbers · ${w.games} game${w.games > 1 ? 's' : ''}</option>`).join('')}</optgroup>`).join('');
+sel.value = wheel.id;
+sel.addEventListener('change', () => { wheel = WHEELS.find(w => w.id === sel.value); if (picked.length > wheel.field) picked = picked.slice(0, wheel.field); wheeled = []; renderWheel(); });
+const grid = document.getElementById('grid45');
+for (let n = 1; n <= 45; n++) grid.insertAdjacentHTML('beforeend', `<button class="ball-btn" type="button" data-n="${n}" aria-pressed="false">${n}</button>`);
+grid.addEventListener('click', e => {
+  const b = e.target.closest('[data-n]'); if (!b) return; const n = +b.dataset.n;
+  if (picked.includes(n)) picked = picked.filter(x => x !== n); else if (picked.length < wheel.field) picked.push(n);
+  wheeled = []; afterPick();
+});
+function afterPick() { if (picked.length === wheel.field && document.getElementById('autoWheel').checked) doWheel(); renderWheel(); }
+function doWheel() {
+  const ch = [...picked].sort((a, b) => a - b);
+  wheeled = wheel.combos.map(c => c.match(/\d\d/g).map(p => ch[+p - 1]).sort((a, b) => a - b));
+}
+function renderWheel() {
+  document.getElementById('wheelText').textContent = wheel.text;
+  document.getElementById('wheelField').textContent = wheel.field;
+  document.getElementById('wheelGames').textContent = wheel.games;
+  document.getElementById('selCount').textContent = `Selected ${picked.length} of ${wheel.field}`;
+  grid.querySelectorAll('[data-n]').forEach(b => { const on = picked.includes(+b.dataset.n); b.setAttribute('aria-pressed', on); b.disabled = !on && picked.length >= wheel.field; });
+  document.getElementById('pickedBalls').innerHTML = [...picked].sort((a, b) => a - b).map(n => ballHTML(n, 'sm')).join('');
+  document.getElementById('wheelIt').disabled = picked.length !== wheel.field;
+  renderGamesOut(document.getElementById('wheelOut'), wheeled);
+  document.getElementById('wheelCount').textContent = wheeled.length ? wheeled.length + ' games' : '';
+}
+function fillFrom(order) { for (const n of order) { if (picked.length >= wheel.field) break; if (!picked.includes(n)) picked.push(n); } wheeled = []; afterPick(); }
+document.getElementById('quickPick').addEventListener('click', () => { if (picked.length === wheel.field) picked = []; const all = Array.from({ length: 45 }, (_, i) => i + 1).sort(() => Math.random() - 0.5); fillFrom(all); });
+document.getElementById('lastDrawn').addEventListener('click', () => { const d = draws[draws.length - 1]; fillFrom([...d.main, ...d.supp]); });
+document.getElementById('wheelClear').addEventListener('click', () => { picked = []; wheeled = []; renderWheel(); });
+document.getElementById('hcGo').addEventListener('click', () => fillFrom(rankNumbers(document.getElementById('hcKind').value, document.getElementById('hcSpan').value, document.getElementById('hcSupps').checked)));
+document.getElementById('wheelIt').addEventListener('click', () => { doWheel(); renderWheel(); });
+document.getElementById('wheelCheck').addEventListener('click', () => wheeled.length ? setGames(wheeled) : toast('Wheel some numbers first'));
+document.getElementById('wheelCopy').addEventListener('click', () => wheeled.length ? copyText(wheeled.map(gameToLot).join('\n'), 'Copied ' + wheeled.length + ' games') : toast('Wheel some numbers first'));
+
+/* ---------- ADD DRAW ---------- */
+const adMain = document.getElementById('adMain'), adSupp = document.getElementById('adSupp');
+for (let i = 0; i < 6; i++) adMain.insertAdjacentHTML('beforeend', `<input type="number" min="1" max="45" id="adm${i}" style="width:58px" aria-label="Winning number ${i + 1}">`);
+for (let i = 0; i < 2; i++) adSupp.insertAdjacentHTML('beforeend', `<input type="number" min="1" max="45" id="ads${i}" style="width:58px" aria-label="Supplementary ${i + 1}">`);
+function prefillAdd() {
+  const d = draws[draws.length - 1];
+  document.getElementById('adNum').value = d.num + 2;
+  const dt = new Date(+d.date.slice(0, 4), +d.date.slice(4, 6) - 1, +d.date.slice(6, 8) + 7);
+  document.getElementById('adDate').value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+document.getElementById('addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = document.getElementById('adMsg');
+  const num = +document.getElementById('adNum').value; const date = document.getElementById('adDate').value.replace(/-/g, '');
+  const main = [], supp = [];
+  for (let i = 0; i < 6; i++) main.push(+document.getElementById('adm' + i).value);
+  for (let i = 0; i < 2; i++) supp.push(+document.getElementById('ads' + i).value);
+  const all = [...main, ...supp];
+  if (!num || date.length !== 8) { msg.textContent = 'Enter the draw number and date.'; return; }
+  if (!all.every(n => n >= 1 && n <= 45) || new Set(all).size !== 8) { msg.textContent = 'Enter eight different numbers from 1 to 45: six winning numbers and two supplementaries.'; return; }
+  if (draws.some(d => d.num === num && d.id.startsWith('B'))) { msg.textContent = `Draw B${num} is already in the history.`; return; }
+  added.push({ id: 'B' + num, num, date, main, supp, added: true });
+  try { localStorage.setItem('ll-added', JSON.stringify(added)); } catch (err) {}
+  msg.textContent = '';
+  for (let i = 0; i < 6; i++) document.getElementById('adm' + i).value = '';
+  for (let i = 0; i < 2; i++) document.getElementById('ads' + i).value = '';
+  refreshDraws(); toast(`Added draw B${num}`);
+});
+function renderAdded() {
+  const el = document.getElementById('addedList');
+  el.innerHTML = added.length ? added.map((d, i) => `<li><span>${d.id} · ${fmtDate(d.date)}</span><span>${d.main.join(' ')} + ${d.supp.join(' ')} <button type="button" data-del="${i}" style="padding:2px 8px;margin-left:8px">Remove</button></span></li>`).join('') : '<li class="empty">No draws added yet.</li>';
+  el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { added.splice(+b.dataset.del, 1); try { localStorage.setItem('ll-added', JSON.stringify(added)); } catch (err) {} refreshDraws(); }));
+}
+document.getElementById('copyHistory').addEventListener('click', () => {
+  const lines = ['Draw,YYYYMMDD,Drawn1,Drawn2,Drawn3,Drawn4,Drawn5,Drawn6,Drawn7,Drawn8'].concat(draws.map(d => [d.id, d.date, ...d.main, ...d.supp, ...(d.supp.length < 2 ? [0] : [])].join(',')));
+  copyText(lines.join('\r\n') + '\r\n', `Copied ${draws.length} draws`);
+});
+
+/* ---------- start ---------- */
+function refreshDraws() {
+  parseDraws();
+  drawRange.max = draws.length; browse.max = draws.length - 1; browse.value = draws.length - 1;
+  renderLatest(); renderBrowse(); updateRangeText(); renderAdded(); prefillAdd();
+  if (!document.getElementById('screen-graphs').hidden) drawGraph();
+}
+refreshDraws();
+updateGameCount();
+syncSums();
+renderCheck();
+renderGraphOpts();
+renderDesign();
+renderWheel();
+showTab();
+</script>
