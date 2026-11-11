@@ -6,14 +6,14 @@ A Saturday Lotto (Tattslotto) checker, grapher, game designer and wheeling syste
 
 | Folder | Contents |
 | --- | --- |
-| `web/` | `index.html`: the web version. It is a single page with everything built in and runs in any browser, with no server needed. |
+| `docs/` | `index.html`: the web version. It is a single page with everything built in and runs in any browser, with no server needed. |
 | `vb6/` | The Visual Basic project, rebuilt from the original compiled program. Open `Xlotto.vbp` in VB6 or twinBASIC. |
 | `data/` | `tattslot.txt` (the full Saturday Lotto draw history) and `number.lot` (the default game file). |
-| `tools/` | `build.py`, `template.html` and `wheels.json`, used to regenerate `web/index.html` after the data changes. |
+| `tools/` | `build.py`, `template.html` and `wheels.json`, used to regenerate `docs/index.html` after the data changes. |
 
 ## Web version
 
-Open `web/index.html` in a browser, or turn on GitHub Pages for the repo and point it at the `web` folder. It has the same five screens as the original:
+Open `docs/index.html` in a browser. To put it online, open the repo's Settings → Pages and choose to deploy from the `main` branch, `/docs` folder. It has the same five screens as the original:
 
 - **Check winnings.** Checks your games against any number of past draws and shows division counts, expected wins and a list of wins.
 - **Graphing.** Shows how often each ball has been drawn, weeks since each ball was last drawn, draw sums with a trend line, and your wins per draw.
