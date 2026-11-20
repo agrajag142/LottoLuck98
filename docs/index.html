@@ -3388,7 +3388,20 @@ const pad = n => String(n).padStart(2, '0');
 const gameToLot = g => g.map(pad).join('');
 /* CRLF line breaks so the VB6 program's Line Input reads the file correctly */
 const gamesToLot = games => games.map(gameToLot).join('\r\n') + '\r\n';
-function saveFile(name, text) {
+async function saveFile(name, text) {
+  /* inside the Claude artifact viewer, files go through its downloads capability (.lot isn't an
+     allowed extension there, so those are saved as .txt); everywhere else a normal download link */
+  if (window.claude && typeof window.claude.use === 'function') {
+    let dl = null;
+    try { dl = await window.claude.use('downloads'); } catch (e) {}
+    if (dl) {
+      const safe = name.endsWith('.lot') ? name.replace(/\.lot$/, '.txt') : name;
+      try { await dl.save({ filename: safe, data: text }); toast(safe === name ? 'Saved ' + name : `Saved ${safe}: rename it to .lot for the VB6 program`); }
+      catch (e) { if (e && e.code !== 'declined') copyText(text, 'Saving is unavailable here, so it was copied instead'); }
+      return;
+    }
+    copyText(text, 'Saving is unavailable here, so it was copied instead'); return;
+  }
   try {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
