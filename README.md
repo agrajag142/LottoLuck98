@@ -15,6 +15,7 @@ A Saturday Lotto (Tattslotto) checker, grapher, game designer and wheeling syste
 
 Open `docs/index.html` in a browser. To put it online, open the repo's Settings → Pages and choose to deploy from the `main` branch, `/docs` folder. It has the same five screens as the original:
 
+- **Costs.** Uses Lott's Saturday Lotto prices: exact pack prices for 6, 10, 12, 18, 25, 36 and 50 games, and the average of those packs (about 95.7c a game) for any other number of games. You can change the price per game on the Check winnings screen. Costs are shown per draw and per year on the Game designer and Wheeling screens, and in the Wheel list.
 - **Check winnings.** Checks your games against any number of past draws and shows counts for all six of today's divisions (Division 6 is 3 numbers), expected wins, the outlay at your price per game, and a list of wins. It warns about duplicate games, and it can find every draw that contained a set of numbers.
 - **Graphing.** Shows how often each ball has been drawn, weeks since each ball was last drawn, draw sums with a trend line, your wins per draw, which balls are drawn most often with a chosen ball, and how many odd numbers each draw had.
 - **Game designer.** Makes random games with a sum range, preferred numbers (coldest, hottest or most overdue), the option to leave out 7 or 13, an odd-number range and a limit on consecutive numbers. It never repeats a game, and it can skip any game that has already won Division 1. Games can be copied or saved as a `.lot` file.

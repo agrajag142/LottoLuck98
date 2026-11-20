@@ -180,9 +180,10 @@ footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: va
           <p class="hint" id="rangeText"></p>
           <div class="row">
             <label class="hint" for="price">Price per game $</label>
-            <input id="price" type="number" min="0" step="0.01" placeholder="0.00" style="width:90px">
-            <span class="hint" id="outlay"></span>
+            <input id="price" type="number" min="0" step="0.001" style="width:96px">
+            <button type="button" id="priceReset" class="chip">Lott average</button>
           </div>
+          <p class="hint" id="outlay"></p>
           <button class="primary" id="runCheck" type="button">Check games</button>
           <div class="progress" aria-hidden="true"><i id="checkProg"></i></div>
         </div>
@@ -337,6 +338,8 @@ footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: va
           <div class="summary">
             <div class="stat"><div class="v" id="wheelField"></div><div class="k">numbers to pick</div></div>
             <div class="stat"><div class="v" id="wheelGames"></div><div class="k">games</div></div>
+            <div class="stat"><div class="v" id="wheelCost"></div><div class="k">a draw</div></div>
+            <div class="stat"><div class="v" id="wheelYear"></div><div class="k">a year (52 draws)</div></div>
           </div>
         </div>
         <div class="panel flat">
@@ -453,6 +456,14 @@ const DEFAULT_GAMES = `/*__GAMES__*/`;
 /* ---------- data ---------- */
 const ODDS = { 1: 8145060, 2: 678755, 3: 36690, 4: 733, 5: 298, 0: 53 };
 const divName = c => 'Division ' + (c === 0 ? 6 : c);
+/* Saturday Lotto prices (Lott website, Nov 2026). Packs of these sizes use the exact price;
+   any other number of games uses the price per game, which defaults to the average of the packs. */
+const PACKS = { 6: 5.75, 10: 9.60, 12: 11.50, 18: 17.20, 25: 23.90, 36: 34.40, 50: 47.80 };
+const LOTT_AVG = Object.entries(PACKS).reduce((s, [n, p]) => s + p / n, 0) / Object.keys(PACKS).length;
+function pricePerGame() { const v = parseFloat(document.getElementById('price').value); return v > 0 ? v : LOTT_AVG; }
+function usingLottPrice() { return Math.abs(pricePerGame() - LOTT_AVG) < 0.0006; }
+function gameCost(n) { return usingLottPrice() && PACKS[n] ? PACKS[n] : n * pricePerGame(); }
+const money = x => '$' + x.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 let added = [];
 try { added = JSON.parse(localStorage.getItem('ll-added') || '[]'); } catch (e) { added = []; }
 let draws = [];
@@ -593,8 +604,7 @@ function updateRangeText() {
   const n = +drawRange.value; const g = parseGames(gamesText.value).games.length;
   const first = draws[draws.length - n];
   document.getElementById('rangeText').textContent = `Last ${n} draw${n > 1 ? 's' : ''}, back to ${first.id} (${fmtDate(first.date)}). Equivalent to ${(n * g).toLocaleString()} games.`;
-  const price = parseFloat(document.getElementById('price').value);
-  document.getElementById('outlay').textContent = price > 0 ? `Outlay $${(price * n * g).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
+  document.getElementById('outlay').textContent = g ? `${g} games cost ${money(gameCost(g))} a draw, so ${money(gameCost(g) * n)} over these ${n} draw${n > 1 ? 's' : ''}.` : '';
   document.querySelectorAll('#presetRow .chip').forEach(b => {
     const v = b.dataset.n === 'all' ? draws.length : b.dataset.n === 'since45' ? spanToCount('since45') : +b.dataset.n;
     b.setAttribute('aria-pressed', v === n ? 'true' : 'false');
@@ -602,8 +612,10 @@ function updateRangeText() {
 }
 drawRange.addEventListener('input', updateRangeText);
 const priceInput = document.getElementById('price');
-try { priceInput.value = localStorage.getItem('ll-price') || ''; } catch (e) {}
-priceInput.addEventListener('input', () => { try { localStorage.setItem('ll-price', priceInput.value); } catch (e) {} updateRangeText(); });
+try { priceInput.value = localStorage.getItem('ll-price') || LOTT_AVG.toFixed(3); } catch (e) { priceInput.value = LOTT_AVG.toFixed(3); }
+priceInput.addEventListener('input', () => { try { localStorage.setItem('ll-price', priceInput.value); } catch (e) {} costChanged(); });
+document.getElementById('priceReset').addEventListener('click', () => { priceInput.value = LOTT_AVG.toFixed(3); try { localStorage.removeItem('ll-price'); } catch (e) {} costChanged(); });
+function costChanged() { updateRangeText(); renderDesign(); renderWheelCost(); renderCheck(); }
 document.querySelectorAll('#presetRow .chip').forEach(b => b.addEventListener('click', () => {
   drawRange.value = b.dataset.n === 'all' ? draws.length : b.dataset.n === 'since45' ? spanToCount('since45') : b.dataset.n;
   updateRangeText();
@@ -672,7 +684,7 @@ function renderCheck() {
     list.innerHTML = '<li class="empty">Choose how many draws to check, then press Check games.</li>';
     sum.innerHTML = ''; return;
   }
-  document.getElementById('checkSub').textContent = `${c.games} games × ${c.n} draws`;
+  document.getElementById('checkSub').textContent = `${c.games} games × ${c.n} draws · cost ${money(gameCost(c.games) * c.n)}`;
   const shown = document.getElementById('showDiv6').checked ? c.wins : c.wins.filter(w => w.div <= 5);
   const total = shown.length;
   const lastWin = shown.length ? shown[0].draw : null;
@@ -897,7 +909,7 @@ manualRow.addEventListener('keydown', e => {
 function renderGamesOut(el, games) {
   el.innerHTML = games.length ? games.map((g, i) => `<span><em>${String(i + 1).padStart(3, ' ')}</em>${g.map(pad).join(' ')} <em>Σ${g.reduce((a, b) => a + b, 0)}</em></span>`).join('') : '<span class="empty">No games yet.</span>';
 }
-function renderDesign() { renderGamesOut(document.getElementById('designOut'), designGames); document.getElementById('designCount').textContent = designGames.length + ' games'; }
+function renderDesign() { renderGamesOut(document.getElementById('designOut'), designGames); document.getElementById('designCount').textContent = designGames.length ? `${designGames.length} games · ${money(gameCost(designGames.length))} a draw · ${money(gameCost(designGames.length) * 52)} a year` : '0 games'; }
 document.getElementById('designClear').addEventListener('click', () => { designGames = []; renderDesign(); });
 document.getElementById('designCheck').addEventListener('click', () => designGames.length ? setGames(designGames) : toast('Create some games first'));
 document.getElementById('designCopy').addEventListener('click', () => designGames.length ? copyText(gamesToLot(designGames), 'Copied ' + designGames.length + ' games') : toast('Create some games first'));
@@ -912,7 +924,7 @@ let picked = []; let wheeled = [];
 const sel = document.getElementById('wheelSel');
 const groups = {};
 WHEELS.forEach(w => (groups[w.prize] = groups[w.prize] || []).push(w));
-sel.innerHTML = Object.keys(groups).map(p => `<optgroup label="Guarantees ${p}">${groups[p].map(w => `<option value="${w.id}">${w.field} numbers · ${w.games} game${w.games > 1 ? 's' : ''}</option>`).join('')}</optgroup>`).join('');
+sel.innerHTML = Object.keys(groups).map(p => `<optgroup label="Guarantees ${p}">${groups[p].map(w => `<option value="${w.id}">${w.field} numbers · ${w.games} game${w.games > 1 ? 's' : ''} · ${money(gameCost(w.games))}</option>`).join('')}</optgroup>`).join('');
 sel.value = wheel.id;
 sel.addEventListener('change', () => { wheel = WHEELS.find(w => w.id === sel.value); if (picked.length > wheel.field) picked = picked.slice(0, wheel.field); wheeled = []; renderWheel(); });
 const grid = document.getElementById('grid45');
@@ -931,13 +943,19 @@ function renderWheel() {
   document.getElementById('wheelText').textContent = wheel.text;
   document.getElementById('wheelField').textContent = wheel.field;
   document.getElementById('wheelGames').textContent = wheel.games;
+  renderWheelCost();
   document.getElementById('selCount').textContent = `Selected ${picked.length} of ${wheel.field}`;
   grid.querySelectorAll('[data-n]').forEach(b => { const on = picked.includes(+b.dataset.n); b.setAttribute('aria-pressed', on); b.disabled = !on && picked.length >= wheel.field; });
   document.getElementById('pickedBalls').innerHTML = [...picked].sort((a, b) => a - b).map(n => ballHTML(n, 'sm')).join('');
   document.getElementById('wheelIt').disabled = picked.length !== wheel.field;
   renderGamesOut(document.getElementById('wheelOut'), wheeled);
-  document.getElementById('wheelCount').textContent = wheeled.length ? wheeled.length + ' games' : '';
+  document.getElementById('wheelCount').textContent = wheeled.length ? `${wheeled.length} games · ${money(gameCost(wheeled.length))} a draw` : '';
   renderWheelTest(); renderField();
+}
+function renderWheelCost() {
+  document.getElementById('wheelCost').textContent = money(gameCost(wheel.games));
+  document.getElementById('wheelYear').textContent = money(gameCost(wheel.games) * 52);
+  [...sel.options].forEach(o => { const w = WHEELS.find(x => x.id === o.value); o.textContent = `${w.field} numbers · ${w.games} game${w.games > 1 ? 's' : ''} · ${money(gameCost(w.games))}`; });
 }
 const matchName = k => k === 6 ? 'Division 1' : k === 5 ? 'Division 3' : k === 4 ? 'Division 4' : k === 3 ? 'Division 6' : 'no prize';
 function renderWheelTest() {
