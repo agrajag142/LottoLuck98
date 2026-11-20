@@ -1868,6 +1868,9 @@ Public Sub clearcolor()
     For n = 1 To 45
         GridLabel(n).BackColor = COLOR_FREE
     Next n
+    ' FIX: refresh the selected count - it stayed at the old value, so after changing
+    ' wheels (or Quick Pick on a full field) no numbers could be picked
+    updateselect
 End Sub
 
 Public Sub ClearPanel()
@@ -1896,7 +1899,7 @@ Public Sub updateselect()
     For n = 1 To 45
         If GridLabel(n).BackColor = COLOR_PICKED Then
             k = k + 1
-            Chosen(k) = CStr(n)
+            Chosen(k) = Two(n)      ' FIX: two digits, as in the original EXE ("5" broke the 12-digit games)
         End If
     Next n
     For n = 1 To 45
@@ -1937,9 +1940,13 @@ Public Sub Wheelthedata()
     WheeledList.Clear
     For g = 1 To WheelGames Step 5
         For k = 1 To 5
-            row(k) = Format(Wheeled(g + k - 1), "## ## ## ## ## ## ## ##")
-            If Len(row(k)) = 18 Then row(k) = "0" & Right$(row(k), 16)
-            If Len(row(k)) = 19 Then row(k) = Right$(row(k), 17)
+            ' FIX: spaced out with Mid$ - the old Format() trick dropped the leading zero
+            row(k) = ""
+            If g + k - 1 <= WheelGames Then
+                For p = 1 To 11 Step 2
+                    row(k) = row(k) & Mid$(Wheeled(g + k - 1), p, 2) & IIf(p < 11, " ", "")
+                Next p
+            End If
         Next k
         WheeledList.AddItem "     " & row(1) & "          " & row(2) & "          " & row(3) & _
                             "          " & row(4) & "          " & row(5)
@@ -1967,14 +1974,10 @@ End Sub
 '  Automatic pickers
 '---------------------------------------------------------------------------
 Private Sub PickRandom()
-    Dim k As Integer
     If WheelNumbers = SelectedCount Then clearcolor
     Do While WheelNumbers > SelectedCount
         ClickedNum = Int(Rnd * 45) + 1
         HotColdPicks
-        For k = 1 To CInt(Format(Time, "ss"))      ' stir the generator
-            ClickedNum = CInt(Rnd)
-        Next k
     Loop
 End Sub
 
@@ -2064,6 +2067,8 @@ Private Sub PickPowerDue(ByVal recent As Integer)
     Next d
     For n = 1 To 45
         power(n) = CInt((allTime(n) / LastDraw) * 100 - (lately(n) / recent) * 100)
+        If power(n) > 100 Then power(n) = 100
+        If power(n) < -100 Then power(n) = -100
     Next n
     k = 1
     For c = 100 To -100 Step -1
@@ -2357,7 +2362,6 @@ Private Sub Form_Load()
     LayoutForm
     ' default wheel: 14 numbers / 14 games
     forteenforteen_Click
-    WheelText = "THESE 14 COMBINATIONS OF THE FIELD OF 14 NUMBERS' ASSURE A 3rd PRIZE WINNER     IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 14 !"
     ShowWheelInfo
     WheeledList.Clear
 End Sub
@@ -4345,7 +4349,7 @@ Private Sub elevenfive_Click()
 End Sub
 
 Private Sub twelvesix_Click()
-    WheelText = "THESE 6 COMBINATIONS OF THE FIELD OF 12 NUMBERS' ASSURE A 3rd PRIZE WINNER" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 12 NUMBERS!"
+    WheelText = "THESE 6 COMBINATIONS OF THE FIELD OF 12 NUMBERS ASSURE AT LEAST A 4th PRIZE (4 NUMBERS)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 12 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 6
     WheelNumbers = 12
     ShowWheelInfo
@@ -4361,7 +4365,7 @@ Private Sub twelvesix_Click()
 End Sub
 
 Private Sub twelveeighteen_Click()
-    WheelText = "THESE 18 COMBINATIONS OF THE FIELD OF 12 NUMBERS, ASSURE A 3rd PRIZE WINNER" & Chr$(13) & "IF ANY 5 NUMBERS DRAWN FALL WITHIN THE FIELD OF 12 !"
+    WheelText = "THESE 18 COMBINATIONS OF THE FIELD OF 12 NUMBERS ASSURE AT LEAST A 4th PRIZE (4 NUMBERS)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 12 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 18
     WheelNumbers = 12
     ShowWheelInfo
@@ -4389,7 +4393,7 @@ Private Sub twelveeighteen_Click()
 End Sub
 
 Private Sub twelveforty_Click()
-    WheelText = "THESE 42 COMBINATIONS OF THE FIELD OF 12 NUMBERS' ASSURE A 2nd PRIZE WINNER" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 12 !"
+    WheelText = "THESE 42 COMBINATIONS OF THE FIELD OF 12 NUMBERS ASSURE AT LEAST A 3rd PRIZE (5 NUMBERS)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 12 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 42
     WheelNumbers = 12
     ShowWheelInfo
@@ -4441,7 +4445,7 @@ Private Sub twelveforty_Click()
 End Sub
 
 Private Sub forteenforteen_Click()
-    WheelText = "THESE 14 COMBINATIONS OF THE FIELD OF 14 NUMBERS' ASSURE A 3rd PRIZE WINNER  IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 14 !"
+    WheelText = "THESE 14 COMBINATIONS OF THE FIELD OF 14 NUMBERS ASSURE AT LEAST A 4th PRIZE (4 NUMBERS)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 14 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 14
     WheelNumbers = 14
     ShowWheelInfo
@@ -4465,7 +4469,7 @@ Private Sub forteenforteen_Click()
 End Sub
 
 Private Sub seveneleven_Click()
-    WheelText = "THESE 11 COMBINATIONS OF THE FIELD OF 17 NUMBERS' ASSURE A 4th PRIZE WINNER" & Chr$(13) & "IF ANY 5 NUMBERS DRAWN FALL WITHIN A FIELD OF 17 NUMBERS !"
+    WheelText = "THESE 11 COMBINATIONS OF THE FIELD OF 17 NUMBERS ASSURE AT LEAST A MATCH OF 3 NUMBERS (DIVISION 6 UNDER TODAY'S RULES)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 17 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 11
     WheelNumbers = 17
     ShowWheelInfo
@@ -4486,7 +4490,7 @@ Private Sub seveneleven_Click()
 End Sub
 
 Private Sub ofnftg_Click()
-    WheelText = "THESE 42 COMBINATIONS OF THE FIELD OF 18 NUMBERS' ASSURE A 3rd PRIZE WINNER !" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 18 !"
+    WheelText = "THESE 42 COMBINATIONS OF THE FIELD OF 18 NUMBERS ASSURE AT LEAST A 4th PRIZE (4 NUMBERS)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 18 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 42
     WheelNumbers = 18
     ShowWheelInfo
@@ -4538,7 +4542,7 @@ Private Sub ofnftg_Click()
 End Sub
 
 Private Sub twentyeight_Click()
-    WheelText = "THESE 36 COMBINATIONS OF THE FIELD OF 28 NUMBERS' ASSURE A 3rd PRIZE WINNER !" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 28 !"
+    WheelText = "THESE 36 COMBINATIONS OF THE FIELD OF 28 NUMBERS ASSURE AT LEAST A MATCH OF 3 NUMBERS (DIVISION 6 UNDER TODAY'S RULES)" & Chr$(13) & "IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 28 !"   ' FIX: tested - the original text over-claimed
     WheelGames = 36
     WheelNumbers = 28
     ShowWheelInfo
@@ -4586,14 +4590,13 @@ End Sub
 ' (not attached to any menu in the original - kept for completeness)
 Private Sub TenOfFive_Click()
     WheelText = "THESE 10 COMBINATIONS OF THE FIELD OF 5 NUMBERS' ASSURE A 3rd PRIZE WINNER !   IF THE 6 NUMBERS DRAWN FALL WITHIN THE FIELD OF 18 !"
-    WheelGames = 10
-    WheelNumbers = 5
+    ' FIX: this table is incomplete in the original EXE (5 of the 10 games, and it uses
+    ' positions up to 18 while asking for 5 numbers), so it is disabled rather than
+    ' producing broken games.
+    MsgBox "This wheel's table is incomplete in the original program, so it is disabled.", vbInformation
+    WheelGames = 0
+    WheelNumbers = 0
     ShowWheelInfo
-    WheelGame(1) = "010203040506"
-    WheelGame(2) = "010207111516"
-    WheelGame(3) = "010208121317"
-    WheelGame(4) = "010209101418"
-    WheelGame(5) = "010307101518"
     onoffpanel
     ClearPanel
     clearcolor

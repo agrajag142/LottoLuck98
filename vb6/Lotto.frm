@@ -1207,18 +1207,11 @@ Option Explicit
 '===========================================================================
 
 Public Sub loadgamedata()
-    Dim f As Integer
-    Dim GameIndex As Variant           ' RECON: never initialised in the original (always Empty -> 0)
-    GameCount = 1
-    DrawLine(GameIndex) = File         ' original quirk: "File" resolves to the File menu control (writes "True" into DrawLine(0))
-    f = FreeFile
-    Open "number.lot" For Input As #f
-    Do While Not EOF(f)
-        Line Input #f, Games(GameCount)
-        GameCount = GameCount + 1
-    Loop
-    GameCount = GameCount - 1
-    Close #f
+    ' FIX: removed the original "DrawLine(GameIndex) = File" line, which assigned the File
+    ' menu object to a string (error 438 in VB6) and overwrote the header line.
+    On Error Resume Next
+    GameCount = LoadGameFile(App.Path & "\number.lot")
+    On Error GoTo 0
     Label11.Caption = "Comparing " & CStr(GameCount) & " games with last " & CStr(DrawsToCompare - 1) & " draws. "
 End Sub
 
@@ -1298,15 +1291,15 @@ End Sub
 Public Sub Compareit()
     ' Checks every loaded game against the last (DrawsToCompare - 1) draws.
     Dim hits() As Integer, supps() As Integer
-    Dim before(6) As Integer, divs(6) As Integer
+    Dim before(6) As Long, divs(6) As Long      ' FIX: Long - Integer overflowed (error 6) on big checks
     Dim startTime As Variant, drawsChecked As Variant
     Dim lastWin As String
     Dim d As Integer, x As Integer, j As Integer, p As Integer
-    Dim winCount As Integer
+    Dim winCount As Long
     Dim dv As Variant
     Dim num As String
 
-    ReDim hits(1250): ReDim supps(1250)
+    ReDim hits(MAX_GAMES): ReDim supps(MAX_GAMES)
     startTime = Time
     lastWin = ""
     drawsChecked = DrawsToCompare - 1
@@ -1349,7 +1342,7 @@ Public Sub Compareit()
                 Next j
             Next p
             If hits(x) = 2 And supps(x) = 1 Then divs(6) = divs(6) + 1      ' 2 + supp
-            If hits(x) = 3 And supps(x) = 0 Then divs(0) = divs(0) + 1      ' 3, no supp
+            If hits(x) = 3 And supps(x) = 0 Then divs(0) = divs(0) + 1      ' 3, no supp (Division 6 today)
             If hits(x) = 3 And supps(x) > 0 Then divs(5) = divs(5) + 1      ' Division 5
             If hits(x) = 4 And supps(x) >= 0 Then divs(4) = divs(4) + 1     ' Division 4
             If hits(x) = 5 And supps(x) = 0 Then divs(3) = divs(3) + 1      ' Division 3
@@ -1380,9 +1373,12 @@ Public Sub Compareit()
     startTime = Time - startTime
     Duration.Caption = Format(startTime, "HH:MM:SS")
 
+    ' FIX: sound files are optional now - a missing WAV no longer stops the check
+    On Error Resume Next
     If Soundon.Checked = True And divs(1) > 0 Then PlayWinSound1
     If Soundon.Checked = True And divs(1) = 0 And divs(2) > 0 Then PlayWinSound2     ' RECON: exact test
     If Soundon.Checked = True And divs(1) = 0 And divs(2) = 0 And divs(3) > 0 Then PlayWinSound3
+    On Error GoTo 0
 
     If winCount > 0 Then
         Winfrequency.Caption = "Win: 1 in " & Int(1 / (winCount / drawsChecked)) & _
@@ -1406,8 +1402,11 @@ Private Sub LayoutMenus()
     MENU4.Left = MENU1.Width * 4
 End Sub
 
+' cost of one game; 1997 price was $6 for 14 games. Change this to today's price.
+Private Const PRICE_PER_GAME = 6 / 14
+
 Private Sub ShowOutlay(ByVal draws As Variant)
-    Outlay.Caption = "Outlay = $" & CStr(Int(GameCount * 6 / 14 * draws))  ' RECON: rounding
+    Outlay.Caption = "Outlay = $" & Format$(GameCount * PRICE_PER_GAME * draws, "#,##0.00")
 End Sub
 
 Private Sub ShowComparing()
@@ -1450,15 +1449,10 @@ Private Sub Form_Load()
     LayoutMenus
 
     ' load the Tattslotto results history
-    f = FreeFile
-    Open "tattslot.txt" For Input As #f
-    Do While Not EOF(f)
-        Line Input #f, DrawLine(DrawIdx)
-        DrawIdx = DrawIdx + 1
-    Loop
-    DrawIdx = DrawIdx - 1
-    LastDraw = DrawIdx - 1
-    Close #f
+    Randomize                       ' FIX: seed Rnd once (the original never did, so it
+                                    ' "stirred" the generator with a delay loop instead)
+    LastDraw = LoadHistory()
+    DrawIdx = LastDraw
 
     Slider1.Min = 1
     Slider1.Max = LastDraw
@@ -1521,7 +1515,7 @@ Private Sub Command6_MouseMove(Button As Integer, Shift As Integer, X As Single,
 End Sub
 Private Sub Command6_Click()
     If GameCount > 0 Then Compareit
-    ShowOutlay 5          ' (sic - original multiplies by 5 here and by 4 on MouseMove)
+    ShowOutlay 4          ' FIX: original showed 5 draws' cost here
 End Sub
 
 Private Sub Command7_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -1532,7 +1526,7 @@ Private Sub Command7_MouseMove(Button As Integer, Shift As Integer, X As Single,
 End Sub
 Private Sub Command7_Click()
     If GameCount > 0 Then Compareit
-    ShowOutlay 10         ' (sic)
+    ShowOutlay 8          ' FIX: was 10
 End Sub
 
 Private Sub Command8_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -1543,7 +1537,7 @@ Private Sub Command8_MouseMove(Button As Integer, Shift As Integer, X As Single,
 End Sub
 Private Sub Command8_Click()
     If GameCount > 0 Then Compareit
-    ShowOutlay 50         ' (sic)
+    ShowOutlay 52         ' FIX: was 50
 End Sub
 
 Private Sub Command9_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
@@ -1564,18 +1558,18 @@ End Sub
 
 Private Sub Command1_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
     ' ALL + : back to when 45 numbers were introduced (659 draws from the start)
-    DrawIdx = LastDraw - 659
-    DrawsToCompare = (LastDraw - 659) + 1
+    DrawIdx = LastDraw - DRAWS_BEFORE_45
+    DrawsToCompare = (LastDraw - DRAWS_BEFORE_45) + 1
     ShowComparing
     ODDsCalc
-    ShowOutlay LastDraw - 659
+    ShowOutlay LastDraw - DRAWS_BEFORE_45
 End Sub
 Private Sub Command1_Click()
-    DrawIdx = LastDraw - 659
+    DrawIdx = LastDraw - DRAWS_BEFORE_45
     Update
     DrawsToCompare = DrawIdx + 1
     If GameCount > 0 Then Compareit
-    ShowOutlay LastDraw - 659
+    ShowOutlay LastDraw - DRAWS_BEFORE_45
 End Sub
 
 '---------------------------------------------------------------------------
@@ -1619,15 +1613,7 @@ Private Sub GameListbox_DblClick()
     Dim f As Integer
     On Error Resume Next
     GameloadDetails.Caption = "GAME LOADED: " & GameListbox.FileName
-    GameCount = 1
-    f = FreeFile
-    Open GameListbox.FileName For Input As #f
-    Do While Not EOF(f)
-        Line Input #f, Games(GameCount)
-        GameCount = GameCount + 1
-    Loop
-    GameCount = GameCount - 1
-    Close #f
+    GameCount = LoadGameFile(GameListbox.path & "\" & GameListbox.FileName)
     Label11.Caption = "Comparing " & CStr(GameCount) & " games with last " & CStr(DrawsToCompare - 1) & " draws. "
 End Sub
 
@@ -1640,15 +1626,7 @@ Private Sub loadgame_Click()
     CommonDialog1.ShowOpen
     If Right$(CommonDialog1.FileName, 4) = ".lot" And Left$(CommonDialog1.FileName, 1) <> "*" Then
         GameloadDetails.Caption = "GAME LOADED: " & CommonDialog1.FileName
-        GameCount = 1
-        f = FreeFile
-        Open CommonDialog1.FileName For Input As #f
-        Do While Not EOF(f)
-            Line Input #f, Games(GameCount)
-            GameCount = GameCount + 1
-        Loop
-        GameCount = GameCount - 1
-        Close #f
+        GameCount = LoadGameFile(CommonDialog1.FileName)
     End If
     Label11.Caption = "Comparing " & CStr(GameCount) & " games with last " & CStr(DrawsToCompare - 1) & " draws. "
 End Sub
@@ -1726,14 +1704,12 @@ End Sub
 '  Internet update
 '---------------------------------------------------------------------------
 Private Sub updatedraw_Click()
-    Dim b() As Byte
-    Dim f As Integer
-    b() = Inet1.OpenURL("http://www.tattersalls.com.au/files/tattslot.zip", icByteArray)
-    f = FreeFile
-    Open "tattslot.zip" For Binary Access Write As #f
-    Put #f, , b()
-    Close #f
-    MsgBox "Download Complete"
+    ' FIX: the 1997 Tattersalls download (www.tattersalls.com.au/files/tattslot.zip) no longer
+    ' exists, and the zip was never unpacked anyway. New draws are added on the ADD DRAW screen
+    ' or by replacing tattslot.txt with the copy kept in the GitHub repo's data folder.
+    MsgBox "The old Tattersalls results download no longer exists." & vbCrLf & _
+           "Use ADD DRAW, or copy the latest tattslot.txt from the data folder of the GitHub repo.", _
+           vbInformation, "Update draws"
 End Sub
 
 Private Sub Inet1_StateChanged(ByVal State As Integer)

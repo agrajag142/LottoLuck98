@@ -437,23 +437,27 @@ Private Sub Option8_Click()
     Chart1.ShowLegend = False
     DrawIdx = LastDraw
     ProgressBar1.Min = 0
-    ProgressBar1.Max = LastDraw - 659
+    Dim total As Integer
+    total = LastDraw - DRAWS_BEFORE_45
+    ProgressBar1.Max = total
     ProgressBar1.Value = 0
-    ReDim cd(LastDraw - 659, 1)
+    ReDim cd(total - 1, 1)
     For n = 1 To 4000: sums(n) = 0: Next n
-    For d = 1 To LastDraw - 659
+    For d = 1 To total
         Update
         sums(d) = CInt(Val(Drawn(1)) + Val(Drawn(2)) + Val(Drawn(3)) + Val(Drawn(4)) + Val(Drawn(5)) + Val(Drawn(6)))
         DrawIdx = DrawIdx - 1
         ProgressBar1.Value = d
     Next d
     Chart1.TitleText = "SUM OF DRAWS EXCLUDING SUPPLEMENTARY NUMBERS SINCE 45 INTRODUCED"
-    For d = 1 To LastDraw - 659
-        cd(d - 1, 1) = sums(d)
+    ' FIX: plot oldest -> newest (sums() is newest first), so the regression line's
+    ' slope reads the right way round
+    For d = 1 To total
+        cd(total - d, 1) = sums(d)
     Next d
     Chart1.ChartType = 3                      ' 2D line
     Chart1.ChartData = cd
-    Chart1.RowCount = (LastDraw - 659) - 1
+    Chart1.RowCount = total
     Chart1.ChartType = 3
     With Chart1.Plot.SeriesCollection(1).StatLine
         .VtColor.Set 12, 12, 255

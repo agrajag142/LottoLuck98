@@ -893,17 +893,23 @@ Public Sub Closedown()
 End Sub
 
 Private Sub LoadDraws()
-    Dim f As Integer
-    DrawIdx = 0
-    f = FreeFile
-    Open "tattslot.txt" For Input As #f
-    Do While Not EOF(f)
-        Line Input #f, DrawLine(DrawIdx)
-        DrawIdx = DrawIdx + 1
-    Loop
-    DrawIdx = DrawIdx - 1
-    Close #f
+    DrawIdx = LoadHistory()
 End Sub
+
+' FIX: checks the eight numbers are 1-45 and all different before anything is written
+Private Function DrawOK() As Boolean
+    Dim v(8) As Integer, i As Integer, j As Integer
+    v(1) = Val(Draw1.Text): v(2) = Val(Draw2.Text): v(3) = Val(Draw3.Text): v(4) = Val(Draw4.Text)
+    v(5) = Val(Draw5.Text): v(6) = Val(Draw6.Text): v(7) = Val(Draw7.Text): v(8) = Val(Draw8.Text)
+    For i = 1 To 8
+        If v(i) < 1 Or v(i) > 45 Then Exit Function
+        For j = i + 1 To 8
+            If v(i) = v(j) Then Exit Function
+        Next j
+    Next i
+    If Not IsDate(day.Text & "/" & month.Text & "/" & year.Text) Then Exit Function
+    DrawOK = True
+End Function
 
 Private Sub LayoutMenus()
     MENU1.Width = adddraw.Width / 4
@@ -927,25 +933,34 @@ Private Sub Form_Load()
     Frame1.Left = Int((adddraw.Width - Frame1.Width) / 2)
 
     LoadDraws
-    LastDraw = DrawIdx - 1
+    LastDraw = DrawIdx              ' FIX: was DrawIdx - 1 (the draw before the latest)
 
-    ' pre-fill the boxes from the most recent draw
+    ' pre-fill the boxes from the most recent draw, one week later
+    ' FIX: uses DateSerial so the date rolls into the next month/year (day 28 + 7 used to give 35)
+    Dim nextDate As Date
     LastDrawNumber = CInt(Mid(DrawLine(LastDraw), 2, 4))
-    year.Text = CStr(Mid(DrawLine(LastDraw), 7, 4))
-    month.Text = CStr(Mid(DrawLine(LastDraw), 11, 2))
-    day.Text = CStr(Mid(DrawLine(LastDraw), 13, 2) + 7)       ' next week's draw
+    nextDate = DateSerial(Val(Mid(DrawLine(LastDraw), 7, 4)), Val(Mid(DrawLine(LastDraw), 11, 2)), _
+                          Val(Mid(DrawLine(LastDraw), 13, 2)) + 7)
+    year.Text = Format$(nextDate, "yyyy")
+    month.Text = Format$(nextDate, "mm")
+    day.Text = Format$(nextDate, "dd")
     draw.Caption = "DRAW: " & CStr(LastDrawNumber + 2)
 End Sub
 
 Private Sub Add_Click()
     Dim f As Integer
     On Error GoTo AddErr
-    SaveString = "B" & CStr(LastDrawNumber + 2) & "," & year.Text & month.Text & day.Text & "," & _
+    If Not DrawOK() Then
+        Message.Caption = "CHECK THE DATE AND THE 8 NUMBERS (1-45, NO REPEATS)"
+        Exit Sub
+    End If
+    year.Text = Format$(Val(year.Text), "0000"): month.Text = Two(month.Text): day.Text = Two(day.Text)
+    SaveString = "B" & Format$(LastDrawNumber + 2, "0000") & "," & year.Text & month.Text & day.Text & "," & _
         Draw1.Text & "," & Draw2.Text & "," & Draw3.Text & "," & Draw4.Text & "," & _
         Draw5.Text & "," & Draw6.Text & "," & Draw7.Text & "," & Draw8.Text
     If SaveString <> "" Then
         f = FreeFile
-        Open "tattslot.txt" For Append As #f
+        Open App.Path & "\tattslot.txt" For Append As #f
         Print #f, SaveString
         Close #f
     End If
@@ -953,7 +968,9 @@ Private Sub Add_Click()
     ADD.Enabled = False
     LoadDraws
     LastDraw = DrawIdx
+    Exit Sub
 AddErr:
+    Message.Caption = "COULD NOT WRITE TATTSLOT.TXT: " & Err.Description
 End Sub
 
 Private Sub Command1_Click()

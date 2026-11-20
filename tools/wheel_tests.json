@@ -1,0 +1,288 @@
+{
+ "sixone": {
+  "ok": true,
+  "field": 6,
+  "games": 1,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "sevenseven": {
+  "ok": true,
+  "field": 7,
+  "games": 7,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "eighttwenty": {
+  "ok": true,
+  "field": 8,
+  "games": 28,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "nineeightfour": {
+  "ok": true,
+  "field": 9,
+  "games": 84,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "tentwooneo": {
+  "ok": true,
+  "field": 10,
+  "games": 210,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "elevenfoursixtwo": {
+  "ok": true,
+  "field": 11,
+  "games": 462,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "twelveninetwofour": {
+  "ok": true,
+  "field": 12,
+  "games": 924,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 5,
+   "6": 6
+  },
+  "dist6": {
+   "6": 1.0
+  },
+  "div2": true
+ },
+ "ninetwelve": {
+  "ok": true,
+  "field": 9,
+  "games": 12,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 4,
+   "6": 5
+  },
+  "dist6": {
+   "5": 0.85714,
+   "6": 0.14286
+  },
+  "div2": true
+ },
+ "TennumbersTen": {
+  "ok": true,
+  "field": 10,
+  "games": 10,
+  "worst": {
+   "3": 3,
+   "4": 3,
+   "5": 4,
+   "6": 4
+  },
+  "dist6": {
+   "4": 0.47619,
+   "5": 0.47619,
+   "6": 0.04762
+  },
+  "div2": false
+ },
+ "elevenfive": {
+  "ok": true,
+  "field": 11,
+  "games": 5,
+  "worst": {
+   "3": 2,
+   "4": 3,
+   "5": 3,
+   "6": 4
+  },
+  "dist6": {
+   "4": 0.68182,
+   "5": 0.30736,
+   "6": 0.01082
+  },
+  "div2": false
+ },
+ "twelvesix": {
+  "ok": true,
+  "field": 12,
+  "games": 6,
+  "worst": {
+   "3": 2,
+   "4": 2,
+   "5": 3,
+   "6": 4
+  },
+  "dist6": {
+   "4": 0.75974,
+   "5": 0.23377,
+   "6": 0.00649
+  },
+  "div2": false
+ },
+ "twelveeighteen": {
+  "ok": true,
+  "field": 12,
+  "games": 18,
+  "worst": {
+   "3": 2,
+   "4": 3,
+   "5": 4,
+   "6": 4
+  },
+  "dist6": {
+   "4": 0.56494,
+   "5": 0.41558,
+   "6": 0.01948
+  },
+  "div2": false
+ },
+ "twelveforty": {
+  "ok": true,
+  "field": 12,
+  "games": 42,
+  "worst": {
+   "3": 3,
+   "4": 4,
+   "5": 4,
+   "6": 5
+  },
+  "dist6": {
+   "5": 0.95455,
+   "6": 0.04545
+  },
+  "div2": false
+ },
+ "forteenforteen": {
+  "ok": true,
+  "field": 14,
+  "games": 14,
+  "worst": {
+   "3": 2,
+   "4": 3,
+   "5": 3,
+   "6": 4
+  },
+  "dist6": {
+   "4": 0.77156,
+   "5": 0.22378,
+   "6": 0.00466
+  },
+  "div2": false
+ },
+ "seveneleven": {
+  "ok": true,
+  "field": 17,
+  "games": 11,
+  "worst": {
+   "3": 2,
+   "4": 2,
+   "5": 3,
+   "6": 3
+  },
+  "dist6": {
+   "3": 0.52165,
+   "4": 0.42663,
+   "5": 0.05082,
+   "6": 0.00089
+  },
+  "div2": false
+ },
+ "ofnftg": {
+  "ok": true,
+  "field": 18,
+  "games": 42,
+  "worst": {
+   "3": 2,
+   "4": 3,
+   "5": 3,
+   "6": 4
+  },
+  "dist6": {
+   "4": 0.83484,
+   "5": 0.1629,
+   "6": 0.00226
+  },
+  "div2": false
+ },
+ "twentyeight": {
+  "ok": true,
+  "field": 28,
+  "games": 36,
+  "worst": {
+   "3": 2,
+   "4": 2,
+   "5": 2,
+   "6": 3
+  },
+  "dist6": {
+   "3": 0.75016,
+   "4": 0.23751,
+   "5": 0.01223,
+   "6": 0.0001
+  },
+  "div2": false
+ },
+ "TenOfFive": {
+  "ok": false,
+  "problems": [
+   "5 games in the table but the wheel says 10",
+   "game 010203040506 uses positions outside a field of 5",
+   "game 010207111516 uses positions outside a field of 5",
+   "game 010208121317 uses positions outside a field of 5",
+   "game 010209101418 uses positions outside a field of 5",
+   "game 010307101518 uses positions outside a field of 5"
+  ]
+ }
+}

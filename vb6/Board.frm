@@ -727,20 +727,20 @@ Option Explicit
 Public Sub GetSixBalls()
     ' picks six different random balls into Balls(1..6), honouring the PREFERRED boxes
     ' and the "7" / "13" exclusion check boxes, then pads and sorts them
-    Dim i As Integer, j As Integer, k As Integer, good As Integer
+    ' FIX: the old version clobbered ClickedNum (shared with the wheeling screen) in its
+    ' "stir" loop, looped forever if a preferred number was also excluded (7/13), and let
+    ' non-numbers or numbers outside 1-45 through from the PREFERRED boxes.
+    Dim i As Integer, j As Integer, good As Integer
     Dim t As String
     Do
         For i = 1 To 6
             Balls(i) = CStr(Int(Rnd * 45) + 1)
-            For k = 1 To CInt(Format(Time, "ss"))       ' stir the generator
-                ClickedNum = Rnd
-            Next k
         Next i
-        If Prefer1.Text <> "" Then Balls(1) = Prefer1.Text
-        If Prefer2.Text <> "" Then Balls(2) = Prefer2.Text
-        If Prefer3.Text <> "" Then Balls(3) = Prefer3.Text
-        If Prefer4.Text <> "" Then Balls(4) = Prefer4.Text
-        If Prefer5.Text <> "" Then Balls(5) = Prefer5.Text
+        If PreferOK(Prefer1.Text) Then Balls(1) = Prefer1.Text
+        If PreferOK(Prefer2.Text) Then Balls(2) = Prefer2.Text
+        If PreferOK(Prefer3.Text) Then Balls(3) = Prefer3.Text
+        If PreferOK(Prefer4.Text) Then Balls(4) = Prefer4.Text
+        If PreferOK(Prefer5.Text) Then Balls(5) = Prefer5.Text
         good = 0
         For i = 1 To 6
             If Seven.Value = 1 And Val(Balls(i)) = 7 Then good = good + 1
@@ -751,7 +751,7 @@ Public Sub GetSixBalls()
         Next i
     Loop Until good = 6           ' each ball matched only itself -> six unique, none excluded
     For i = 1 To 6
-        If Len(Balls(i)) = 1 Then Balls(i) = "0" & Balls(i)
+        Balls(i) = Two(Balls(i))
     Next i
     For i = 1 To 6
         For j = 1 To 6
@@ -761,6 +761,17 @@ Public Sub GetSixBalls()
         Next j
     Next i
 End Sub
+
+' a PREFERRED box is used only if it holds a number 1-45 that isn't excluded
+Private Function PreferOK(ByVal s As String) As Boolean
+    Dim v As Integer
+    If Not IsNumeric(s) Then Exit Function
+    v = Val(s)
+    If v < 1 Or v > 45 Then Exit Function
+    If Seven.Value = 1 And v = 7 Then Exit Function
+    If Thirteen.Value = 1 And v = 13 Then Exit Function
+    PreferOK = True
+End Function
 
 Private Function BallSum() As Integer
     BallSum = Val(Balls(1)) + Val(Balls(2)) + Val(Balls(3)) + Val(Balls(4)) + Val(Balls(5)) + Val(Balls(6))
@@ -794,6 +805,20 @@ Public Sub ManualCheck()
     If Len(Select5.Text) = 1 Then Select5.Text = "0" & Select5.Text
     If Len(Select6.Text) = 1 Then Select6.Text = "0" & Select6.Text
 End Sub
+
+' FIX: a hand-typed game is only added if it is six different numbers 1-45
+Private Function ManualGameOK() As Boolean
+    Dim v(6) As Integer, i As Integer, j As Integer
+    v(1) = Val(Select1.Text): v(2) = Val(Select2.Text): v(3) = Val(Select3.Text)
+    v(4) = Val(Select4.Text): v(5) = Val(Select5.Text): v(6) = Val(Select6.Text)
+    For i = 1 To 6
+        If v(i) < 1 Or v(i) > 45 Then Exit Function
+        For j = i + 1 To 6
+            If v(i) = v(j) Then Exit Function
+        Next j
+    Next i
+    ManualGameOK = True
+End Function
 
 Public Sub Update()
     ' same draw-line parser as Lotto.Update
@@ -898,26 +923,40 @@ End Sub
 '  CREATE GAMES
 '---------------------------------------------------------------------------
 Private Sub Command1_Click()
-    Dim x As Integer, s As Integer
-    For x = 1 To 1250
+    Dim x As Integer, s As Integer, want As Integer, made As Integer
+    Dim tries As Long
+    want = Val(ToGet.Caption)
+    If want < 1 Then Exit Sub
+    If want > MAX_GAMES Then want = MAX_GAMES
+    For x = 1 To MAX_GAMES
         Games(x) = ""
     Next x
     GameList.Clear
-    For x = 1 To Val(ToGet.Caption)
+    made = 0
+    For x = 1 To want
+        tries = 0
         Do
             GetSixBalls
-            Games(x) = Balls(1) & Balls(2) & Balls(3) & Balls(4) & Balls(5) & Balls(6) & "   " & CStr(BallSum())
-            s = Val(Right$(Games(x), 3))
-        Loop Until s >= SliderMin.Value And s <= SliderMax.Value
+            s = BallSum()
+            tries = tries + 1
+        Loop Until (s >= SliderMin.Value And s <= SliderMax.Value) Or tries > 20000
+        ' FIX: give up instead of hanging when the preferred numbers can't fit the sum range
+        If tries > 20000 Then
+            MsgBox "Couldn't make a game with a sum between " & SliderMin.Value & " and " & _
+                   SliderMax.Value & " using those preferred numbers.", vbExclamation
+            Exit For
+        End If
+        made = made + 1
+        Games(made) = Balls(1) & Balls(2) & Balls(3) & Balls(4) & Balls(5) & Balls(6)
         GameList.AddItem " " & Balls(1) & " " & Balls(2) & " " & Balls(3) & " " & Balls(4) & " " & _
-                         Balls(5) & " " & Balls(6) & "   " & CStr(BallSum())
+                         Balls(5) & " " & Balls(6) & "   " & CStr(s)
     Next x
-    GameCount = CLng(ToGet.Caption)
+    GameCount = made
     SaveString = ""
-    For x = 1 To Val(ToGet.Caption) - 1
-        SaveString = SaveString & Left$(Games(x), 12) & Chr$(10) & Chr$(13)
+    For x = 1 To made
+        If x > 1 Then SaveString = SaveString & Chr$(10) & Chr$(13)
+        SaveString = SaveString & Games(x)
     Next x
-    SaveString = SaveString & Left$(Games(CLng(ToGet.Caption)), 12)
 End Sub
 
 Private Sub Saveas_Click()
@@ -963,6 +1002,10 @@ End Sub
 Private Sub Select6_KeyPress(KeyAscii As Integer)
     If KeyAscii = 13 Then
         ManualCheck
+        If Not ManualGameOK() Then
+            MsgBox "Enter six different numbers from 1 to 45.", vbExclamation
+            Exit Sub
+        End If
         GameList.AddItem " " & Select1.Text & " " & Select2.Text & " " & Select3.Text & " " & _
             Select4.Text & " " & Select5.Text & " " & Select6.Text & "   " & _
             CStr(Val(Select1.Text) + Val(Select2.Text) + Val(Select3.Text) + Val(Select4.Text) + Val(Select5.Text) + Val(Select6.Text))
@@ -1055,7 +1098,7 @@ Private Sub Option1_Click()
     ' COLDEST since 45 numbers introduced
     Dim counts(45) As Integer
     Dim c As Integer, n As Integer, k As Integer
-    CountSince counts, LastDraw - 659
+    CountSince counts, LastDraw - DRAWS_BEFORE_45
     k = 1
     For c = 0 To 1000
         For n = 1 To 45
@@ -1070,7 +1113,7 @@ Private Sub Option2_Click()
     ' HOTTEST since 45 numbers introduced
     Dim counts(45) As Integer
     Dim c As Integer, n As Integer, k As Integer
-    CountSince counts, LastDraw - 659
+    CountSince counts, LastDraw - DRAWS_BEFORE_45
     k = 1
     For c = 1000 To 0 Step -1
         For n = 1 To 45
@@ -1086,9 +1129,9 @@ Private Sub Option3_Click()
     Dim allTime(45) As Integer, since45(45) As Integer, power(45) As Integer
     Dim c As Integer, n As Integer, k As Integer
     CountSince allTime, LastDraw
-    CountSince since45, LastDraw - 659
+    CountSince since45, LastDraw - DRAWS_BEFORE_45
     For n = 1 To 45
-        power(n) = CInt((allTime(n) / LastDraw) * 100 - (since45(n) / (LastDraw - 659)) * 100)
+        power(n) = CInt((allTime(n) / LastDraw) * 100 - (since45(n) / (LastDraw - DRAWS_BEFORE_45)) * 100)
     Next n
     k = 1
     For c = 100 To -100 Step -1
