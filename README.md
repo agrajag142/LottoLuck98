@@ -18,7 +18,7 @@ Open `docs/index.html` in a browser. To put it online, open the repo's Settings 
 - **Check winnings.** Checks your games against any number of past draws and shows counts for all six of today's divisions (Division 6 is 3 numbers), expected wins, the outlay at your price per game, and a list of wins. It warns about duplicate games, and it can find every draw that contained a set of numbers.
 - **Graphing.** Shows how often each ball has been drawn, weeks since each ball was last drawn, draw sums with a trend line, your wins per draw, which balls are drawn most often with a chosen ball, and how many odd numbers each draw had.
 - **Game designer.** Makes random games with a sum range, preferred numbers (coldest, hottest or most overdue), the option to leave out 7 or 13, an odd-number range and a limit on consecutive numbers. It never repeats a game, and it can skip any game that has already won Division 1. Games can be copied or saved as a `.lot` file.
-- **Wheeling.** Holds 17 wheels, from 6 numbers in 1 game up to 28 numbers in 36 games. Each one shows its tested guarantee and how often your chosen numbers have contained 3, 4, 5 or 6 of the winning numbers.
+- **Wheeling.** Holds 18 wheels, from 6 numbers in 1 game up to 28 numbers in 36 games, including a 12-number, 132-game Division 2 wheel (the Steiner system S(5,6,12)) added in 2026. Each one shows its tested guarantee and how often your chosen numbers have contained 3, 4, 5 or 6 of the winning numbers.
 - **Add draw.** Adds new results, or loads a newer `tattslot.txt` and takes the draws it doesn't have. Draws are saved in your browser, and the full history can be copied or saved for the VB6 program.
 
 To build the page again after updating `data/tattslot.txt`:
@@ -53,6 +53,7 @@ The win sounds (`sound1.wav`, `sound2.wav` and `sound3.wav`) are not included. P
 | 12 numbers | 6 | Division 3 | **Division 4** |
 | 12 numbers | 18 | Division 3 | **Division 4** |
 | 12 numbers | 42 | Division 2 | **Division 3** |
+| 12 numbers (new, web only) | 132 | — | Division 2 if a supp is in the field too, otherwise Division 3. Also Division 3 when only 5 of the winning numbers are in the field. |
 | 14 numbers | 14 | Division 3 | **Division 4** |
 | 17 numbers | 11 | Division 4 | **3 numbers (Division 6)** |
 | 18 numbers | 42 | Division 3 | **Division 4** |

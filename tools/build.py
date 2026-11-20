@@ -18,13 +18,18 @@ for k, v in wheels.items():
     original = ' '.join(v['text']).replace("'", '')
     m = re.search(r'(1st|2nd|3rd|4th)', original, re.I)
     claimed = CLAIM[m.group(1).lower()] if m else 'Division 1'
-    prize = PRIZE[worst[6]]
+    prize = 'Division 2' if (t['div2'] and worst[6] == 5) else PRIZE[worst[6]]
     combos = [v['combos'][i] for i in sorted(v['combos'], key=int)]
     s = 's' if v['games'] > 1 else ''
-    text = (f"These {v['games']} game{s} from a field of {v['nums']} numbers guarantee at least "
-            f"{'a ' if worst[6] != 2 else ''}{prize} if all six winning numbers fall within your field.")
+    if prize == 'Division 2':
+        text = (f"These {v['games']} game{s} from a field of {v['nums']} numbers guarantee at least Division 2 if all six "
+                f"winning numbers and a supplementary fall within your field, and at least Division 3 if only the six do.")
+    else:
+        text = (f"These {v['games']} game{s} from a field of {v['nums']} numbers guarantee at least "
+                f"{'a ' if worst[6] != 2 else ''}{prize} if all six winning numbers fall within your field.")
+    level = lambda p: int(re.search(r'\d', p).group()) if 'Division' in p else 9
     out.append(dict(id=k, text=text, field=v['nums'], games=v['games'], combos=combos, prize=prize,
-                    rank=worst[6], claimed=claimed, overclaimed=(claimed != prize and not (claimed == 'Division 2' and t['div2'])),
+                    rank=worst[6], claimed=claimed, overclaimed=level(claimed) < level(prize),
                     worst=worst, dist6={int(a): b for a, b in t['dist6'].items()}, div2=t['div2']))
 
 out.sort(key=lambda x: (-x['rank'], x['field'], x['games']))
