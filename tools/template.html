@@ -26,6 +26,8 @@
   --r: 10px;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.rule-sm { display: none; font-size: 12px; }
 html, body { background: var(--ink); color: var(--text); }
 body {
   font: 15px/1.5 var(--f-body);
@@ -97,6 +99,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--gold); }
 .stat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
 .stat .v { font: 600 22px/1.15 var(--f-mono); color: var(--gold); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .stat .k { font-size: 12px; color: var(--muted); }
+#moneySummary .stat .v { font-size: 19px; white-space: nowrap; overflow-wrap: normal; }
 .list { max-height: 320px; overflow: auto; font: 500 13px/1.6 var(--f-mono); background: var(--deep); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 0; list-style: none; }
 .list li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed #1b3a41; padding: 2px 0; }
 .list li:last-child { border-bottom: 0; }
@@ -125,6 +128,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--gold); }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--gold); color: var(--gold-ink); font-weight: 600; padding: 10px 16px; border-radius: 99px; z-index: 20; }
 footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: var(--f-mono); }
 @media (max-width: 560px) {
+  .divtable .rule { display: none; }
+  .divtable .rule-sm { display: block; }
+  .divtable th, .divtable td { padding: 8px 4px; }
   nav.menu a { font-size: 11px; letter-spacing: 0.02em; padding: 10px 2px; }
   .ball { width: 30px; height: 30px; font-size: 13px; }
 }
@@ -135,7 +141,7 @@ footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: va
   <header class="top">
     <div class="brand">
       <h1>LOTTOLUCK <span>'98</span></h1>
-      <small>Version 0.93h beta · written by Justin Little</small>
+      <small>Web version /*__VERSION__*/ · from Version 0.93h beta · written by Justin Little</small>
     </div>
     <div class="latest" id="latest"></div>
   </header>
@@ -206,9 +212,11 @@ footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: va
         <div class="panel">
           <div class="row" style="justify-content:space-between"><h3 id="checkTitle">Results</h3><span class="hint" id="checkSub"></span></div>
           <table class="divtable">
-            <thead><tr><th>Prize</th><th>Rule</th><th style="text-align:right">Expected</th><th style="text-align:right">Won</th></tr></thead>
+            <thead><tr><th>Prize</th><th class="rule">Rule</th><th style="text-align:right">Expected</th><th style="text-align:right">Won</th><th style="text-align:right">Paid</th></tr></thead>
             <tbody id="divBody"></tbody>
           </table>
+          <div class="summary" id="moneySummary"></div>
+          <p class="hint" id="moneyNote"></p>
           <div class="summary" id="summary"></div>
         </div>
         <div class="panel">
@@ -496,7 +504,13 @@ footer { margin-top: 36px; color: var(--muted); font-size: 12px; font-family: va
     </div>
   </section>
 
-  <footer>Lottoluck '98 · Tattslotto checker, grapher and wheeling system · reconstructed from the original VB5 program</footer>
+  <footer>
+    <div class="row" style="justify-content:space-between">
+      <span>Lottoluck '98 · web version /*__VERSION__*/ (/*__VDATE__*/) · reconstructed from the original VB5 program</span>
+      <button type="button" id="historyBtn" aria-expanded="false" aria-controls="historyPanel">Version history</button>
+    </div>
+    <div class="panel flat" id="historyPanel" hidden style="margin-top:12px"></div>
+  </footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -508,6 +522,10 @@ const DEFAULT_GAMES = `/*__GAMES__*/`;
 /* ---------- data ---------- */
 const ODDS = { 1: 8145060, 2: 678755, 3: 36690, 4: 733, 5: 298, 0: 53 };
 const divName = c => 'Division ' + (c === 0 ? 6 : c);
+const VERSION = '/*__VERSION__*/';
+const CHANGELOG = /*__CHANGELOG__*/;
+/* approximate average payout per winning game (Division 1 is a jackpot, so it isn't priced) */
+const PAYOUT = { 2: 10968, 3: 883, 4: 25.64, 5: 15.97, 0: 8.77 };
 /* Saturday Lotto prices (Lott website, Nov 2026). Packs of these sizes use the exact price;
    any other number of games uses the price per game, which defaults to the average of the packs. */
 const PACKS = { 6: 5.75, 10: 9.60, 12: 11.50, 18: 17.20, 25: 23.90, 36: 34.40, 50: 47.80 };
@@ -740,8 +758,22 @@ function renderCheck() {
   body.innerHTML = DIVS.map(d => {
     const exp = ODDS[d.key] ? (c ? Math.floor(c.n / (ODDS[d.key] / c.games) * 10) / 10 : '') : '';
     const won = c ? c.counts[d.key] : '–';
-    return `<tr class="${c && !c.counts[d.key] ? 'zero' : ''}"><td>${d.name}</td><td>${d.rule}</td><td class="num">${exp === '' ? '' : exp.toFixed(1)}</td><td class="big">${won}</td></tr>`;
+    const paid = !c ? '' : d.key === 1 ? (c.counts[1] ? 'jackpot' : '') : PAYOUT[d.key] !== undefined ? money(c.counts[d.key] * PAYOUT[d.key]) : '';
+    return `<tr class="${c && !c.counts[d.key] ? 'zero' : ''}"><td>${d.name}<div class="hint rule-sm">${d.rule}</div></td><td class="rule">${d.rule}</td><td class="num">${exp === '' ? '' : exp.toFixed(1)}</td><td class="big">${won}</td><td class="num">${paid}</td></tr>`;
   }).join('');
+  const ms = document.getElementById('moneySummary'), mn = document.getElementById('moneyNote');
+  if (c) {
+    const cost = gameCost(c.games) * c.n;
+    const won = Object.keys(PAYOUT).reduce((s, k) => s + c.counts[k] * PAYOUT[k], 0);
+    const net = won - cost;
+    ms.innerHTML = `
+      <div class="stat"><div class="v">${money(cost)}</div><div class="k">cost</div></div>
+      <div class="stat"><div class="v">${money(won)}</div><div class="k">approx. winnings</div></div>
+      <div class="stat"><div class="v" style="color:${net >= 0 ? 'var(--ok)' : 'var(--warn)'}">${net < 0 ? '−' : '+'}${money(Math.abs(net))}</div><div class="k">${net >= 0 ? 'ahead' : 'behind'}</div></div>
+      <div class="stat"><div class="v">${cost ? Math.round(won / cost * 100) + 'c' : '–'}</div><div class="k">back per $1 spent</div></div>`;
+    mn.textContent = 'Winnings use approximate average payouts: Division 2 $10,968, Division 3 $883, Division 4 $25.64, Division 5 $15.97, Division 6 $8.77. Real dividends change every draw.' +
+      (c.counts[1] ? ` Plus ${c.counts[1]} Division 1 win${c.counts[1] > 1 ? 's' : ''}; the jackpot isn't included.` : ' Division 1 would be extra, as its jackpot varies.');
+  } else { ms.innerHTML = ''; mn.textContent = ''; }
   const list = document.getElementById('winList'); const sum = document.getElementById('summary');
   if (!c) {
     document.getElementById('checkSub').textContent = 'Not run yet';
@@ -1220,6 +1252,15 @@ document.getElementById('histFile').addEventListener('change', e => {
     document.getElementById('histMsg').textContent = n ? `Added ${n} new draw${n > 1 ? 's' : ''} from ${f.name}.` + (bad ? ` ${bad} line${bad > 1 ? 's' : ''} skipped.` : '') : `No new draws in ${f.name}.`;
   };
   r.readAsText(f);
+});
+
+/* ---------- version history ---------- */
+document.getElementById('historyBtn').addEventListener('click', e => {
+  const p = document.getElementById('historyPanel'); p.hidden = !p.hidden; e.target.setAttribute('aria-expanded', String(!p.hidden));
+  if (!p.hidden && !p.dataset.done) {
+    p.dataset.done = '1';
+    p.innerHTML = CHANGELOG.map(v => `<div><h3 style="font-family:var(--f-mono);font-size:14px;color:${v.version === VERSION ? 'var(--gold)' : 'var(--text)'}">${v.version} · ${fmtDate(v.date.replace(/-/g, ''))}${v.version === VERSION ? ' · this version' : ''}</h3><ul style="margin:6px 0 4px;padding-left:18px;font-family:var(--f-body);font-size:13px;line-height:1.5">${v.items.map(i => `<li>${i.replace(/[<>&]/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[ch])}</li>`).join('')}</ul></div>`).join('');
+  }
 });
 
 /* ---------- start ---------- */

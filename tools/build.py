@@ -36,8 +36,19 @@ out.sort(key=lambda x: (-x['rank'], x['field'], x['games']))
 draws = open('data/tattslot.txt').read().strip()
 games = open('data/number.lot', 'rb').read().decode().replace('\n\r', '\n').replace('\r', '').strip()
 tpl = open('tools/template.html').read()
+ver = json.load(open('tools/version.json'))
+changelog = []
+for block in re.split(r'^## ', open('CHANGELOG.md').read(), flags=re.M)[1:]:
+    head, *lines = block.strip().split('\n')
+    m = re.match(r'(\d+\.\d+\.\d+)\s*[—-]+\s*(\d{4}-\d{2}-\d{2})', head)
+    items = [l[2:].strip().replace('`', '') for l in lines if l.startswith('- ')]
+    changelog.append({'version': m.group(1), 'date': m.group(2), 'items': items})
+assert changelog and changelog[0]['version'] == ver['version'], 'CHANGELOG.md top entry must match tools/version.json'
 html = (tpl.replace('/*__DRAWS__*/', draws)
            .replace('/*__WHEELS__*/', json.dumps(out, separators=(',', ':')))
-           .replace('/*__GAMES__*/', games))
+           .replace('/*__GAMES__*/', games)
+           .replace('/*__CHANGELOG__*/', json.dumps(changelog, ensure_ascii=False))
+           .replace('/*__VERSION__*/', ver['version'])
+           .replace('/*__VDATE__*/', ver['date']))
 open('docs/index.html', 'w').write(html)
-print(f"docs/index.html: {len(html):,} bytes, {len(out)} wheels, {draws.count(chr(10))} draws")
+print(f"docs/index.html v{ver['version']}: {len(html):,} bytes, {len(out)} wheels, {draws.count(chr(10))} draws")
